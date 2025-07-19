@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    "deffy-bot",
+    "handler_macro",
+]
+
+[workspace.dependencies]
+serenity = "0.12"
+tokio = { version = "1.46.1", features = ["full"] }
+dotenv = "0.15.0"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19" , features = ["env-filter"] }

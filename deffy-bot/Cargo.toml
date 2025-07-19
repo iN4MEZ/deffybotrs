@@ -1,0 +1,13 @@
+[package]
+name = "deffybot"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serenity = {workspace = true}
+tokio = {  workspace = true }
+dotenv = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+handler_macro = { path = "../handler_macro" }
+inventory = "0.3.20"
