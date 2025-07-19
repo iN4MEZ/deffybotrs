@@ -40,8 +40,9 @@ pub fn event(attr: TokenStream, item: TokenStream) -> TokenStream {
 
         #[serenity::async_trait]
         impl crate::event::event_registry::Hookable for #registry_struct {
-            async fn call(&self, event: &str, ctx: serenity::prelude::Context, data: Arc<Mutex<Box<dyn Any + Send>>>) {
+            async fn call(&self, event: &str, ctx: serenity::prelude::Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) {
                 if event == stringify!(#e_expr) {
+
                     #fn_name(ctx, data).await;
 
                 }

@@ -304,6 +304,7 @@ dependencies = [
  "dotenv",
  "handler_macro",
  "inventory",
+ "once_cell",
  "serenity",
  "tokio",
  "tracing",

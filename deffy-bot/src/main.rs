@@ -2,6 +2,7 @@ use std::env;
 use dotenv::dotenv;
 
 mod event;
+mod command;
 
 use serenity::{all::GatewayIntents, Client};
 
