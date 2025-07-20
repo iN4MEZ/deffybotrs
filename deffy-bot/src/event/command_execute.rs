@@ -12,8 +12,7 @@ pub static COMMAND_MANAGER: Lazy<Mutex<CommandManager>> =
     Lazy::new(|| Mutex::new(CommandManager::new()));
 
 use crate::command::{
-    command_registry::{ CommandManager},
-    message::testcommand::TestCommand,
+    command_registry::{ CommandManager}
 };
 
 #[event(e = ready)]
@@ -27,7 +26,9 @@ async fn on_ready(ctx: Context, _data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) {
 
     let commands = {
         let mut manager = COMMAND_MANAGER.lock().unwrap();
-        manager.register_command(TestCommand);
+        manager.register_command(crate::command::test_command::TestCommand);
+        manager.register_command(crate::command::key_command::KeyCommand);
+        manager.register_command(crate::command::profile_command::ProfileCommand);
         manager.get_commands()
     };
 
@@ -45,7 +46,6 @@ async fn on_message(ctx: Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) 
     if let Some(interaction_ref) = interaction.downcast_ref::<serenity::model::prelude::Interaction>() {
         let interaction = interaction_ref.clone();
         if let Some(command) = &interaction.as_command() {
-            // You can call the command handler here if needed
 
             let handler_opt = {
                 let guard = COMMAND_MANAGER.lock().unwrap();
@@ -57,11 +57,13 @@ async fn on_message(ctx: Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) 
                     tracing::warn!("No handler found for command: {}", command.data.name);
                 },
                 |handler| {
+                    tracing::trace!("Executing command: {}", command.data.name);
                     let ctx_clone = ctx.clone();
                     let interaction_clone = interaction.clone();
-                    let data = Arc::new(Mutex::new(Box::new(interaction_clone) as Box<dyn Any + Send + Sync>));
                     tokio::spawn(async move {
-                        handler.run(ctx_clone,data).await;
+                        if let Err(e) = handler.execute(ctx_clone, interaction_clone).await {
+                            tracing::error!("Error executing command: {}", e);
+                        }
                     });
                 },
             );

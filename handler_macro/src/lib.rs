@@ -3,7 +3,7 @@ extern crate proc_macro;
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, ItemFn, Ident, Token};
+use syn::{parse_macro_input, Ident, ItemFn, Token};
 use syn::parse::{Parse, ParseStream};
 
 struct EventFnArgs {

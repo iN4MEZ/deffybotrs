@@ -2,6 +2,7 @@
 members = [
     "deffy-bot",
     "handler_macro",
+    "deffy-bot-encryption"
 ]
 
 [workspace.dependencies]
