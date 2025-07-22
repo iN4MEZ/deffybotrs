@@ -1,5 +1,5 @@
 use std::{
-    any::Any, env, fmt::format, ptr, sync::{Arc, Mutex}
+    any::Any, env, sync::{Arc, Mutex}
 };
 
 use handler_macro::event;
@@ -77,7 +77,7 @@ async fn on_message(ctx: Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) 
                             tracing::error!("Error executing command: {}", e);
 
                             let _rsp = interaction.create_response
-                            (ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new().content(format!("{:?}",e)))).await;
+                            (ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new().content(format!("An Command Error: {:?}",e)).ephemeral(true))).await;
                         }
                     });
                 },
