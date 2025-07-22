@@ -1,18 +1,16 @@
 use std::{
-    any::Any,
-    env,
-    sync::{Arc, Mutex},
+    any::Any, env, fmt::format, ptr, sync::{Arc, Mutex}
 };
 
 use handler_macro::event;
 use once_cell::sync::Lazy;
-use serenity::all::{Context, GuildId};
+use serenity::all::{Context, CreateInteractionResponse, CreateInteractionResponseMessage, GuildId};
 
 pub static COMMAND_MANAGER: Lazy<Mutex<CommandManager>> =
     Lazy::new(|| Mutex::new(CommandManager::new()));
 
 use crate::command::{
-    command_registry::{ CommandManager}
+    command_registry::CommandManager
 };
 
 #[event(e = ready)]
@@ -29,6 +27,9 @@ async fn on_ready(ctx: Context, _data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) {
         manager.register_command(crate::command::test_command::TestCommand);
         manager.register_command(crate::command::key_command::KeyCommand);
         manager.register_command(crate::command::profile_command::ProfileCommand);
+        manager.register_command(crate::command::claim_command::ClaimCommand);
+        manager.register_command(crate::command::modal_command::ModalCommand);
+        manager.register_command(crate::command::embed_command::EmbedCommand);
         manager.get_commands()
     };
 
@@ -61,16 +62,26 @@ async fn on_message(ctx: Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) 
                     let ctx_clone = ctx.clone();
                     let interaction_clone = interaction.clone();
                     tokio::spawn(async move {
-                        if let Err(e) = handler.execute(ctx_clone, interaction_clone).await {
+
+                        let interaction = match interaction_clone.as_command() {
+                            Some(c) => c.clone(),
+                            None => {
+                                tracing::error!("Interaction is not a command");
+                                return;
+                            }
+                        };
+
+                        let interaction_hander_clone = interaction.clone();
+
+                        if let Err(e) = handler.execute(ctx_clone, interaction_hander_clone).await {
                             tracing::error!("Error executing command: {}", e);
+
+                            let _rsp = interaction.create_response
+                            (ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new().content(format!("{:?}",e)))).await;
                         }
                     });
                 },
             );
-        } else {
-            tracing::warn!("Received interaction is not a command");
         }
-    } else {
-        tracing::warn!("No command Matched");
     }
 }

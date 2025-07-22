@@ -2,12 +2,12 @@ pub struct EncrytionHelper;
 
 impl EncrytionHelper {
 
-    pub fn encrypt(&self, data: &str) -> String {
+    pub fn encrypt(data: &str) -> String {
         // Placeholder for encryption logic
-        format!("encrypted_{}", data)
+        format!("encrypted_{}", rbase64::encode(data.as_bytes()))
     }
 
-    pub fn decrypt(&self, data: &str) -> String {
+    pub fn decrypt(data: &str) -> String {
         // Placeholder for decryption logic
         data.replace("encrypted_", "")
     }

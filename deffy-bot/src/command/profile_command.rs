@@ -1,8 +1,8 @@
 use serenity::{
     all::{
-        CommandInteraction, Context, CreateAttachment, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse, EditProfile, Interaction, Permissions
+        CommandInteraction, Context, CreateAttachment, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse, EditProfile, Permissions
     },
-    async_trait,
+    async_trait, Error,
 };
 
 use crate::command::command_registry::{CommandHandler, CommandInfo};
@@ -11,23 +11,9 @@ pub struct ProfileCommand;
 
 #[async_trait]
 impl CommandHandler for ProfileCommand {
-    async fn execute(&self, ctx: Context, data: Interaction) -> Result<(), std::io::Error> {
-        let interaction = match data.as_command() {
-            Some(c) => c.clone(),
-            None => {
-                tracing::error!("Interaction is not a command");
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Interaction is not a command",
-                ));
-            }
-        };
+    async fn execute(&self, ctx: Context, interaction: CommandInteraction) -> Result<(), Error> {
 
-        let ctx_clone = ctx.clone();
-        tokio::spawn(async move {
-            // Handle profile logic here
-
-            let _result = interaction.create_response(&ctx.http, CreateInteractionResponse::Defer(CreateInteractionResponseMessage::new())).await;
+         interaction.create_response(&ctx.http, CreateInteractionResponse::Defer(CreateInteractionResponseMessage::new())).await?;
 
             if let Some(input) = interaction.data.options.get(0) {
                 match input.value.as_str() {
@@ -36,7 +22,7 @@ impl CommandHandler for ProfileCommand {
 
                         let att = create_att(&interaction).await.expect("Not found Interaction");
 
-                        if let Err(err) = ctx_clone
+                        if let Err(err) = ctx
                             .http
                             .edit_profile(&EditProfile::new().avatar(&att))
                             .await
@@ -51,7 +37,7 @@ impl CommandHandler for ProfileCommand {
 
                         let att = create_att(&interaction).await.unwrap();
 
-                        if let Err(err) = ctx_clone
+                        if let Err(err) = ctx
                             .http
                             .edit_profile(&EditProfile::new().banner(&att))
                             .await
@@ -72,10 +58,13 @@ impl CommandHandler for ProfileCommand {
                 "All Profile information retrieved successfully."
             );
 
-            let _ = interaction.edit_response(ctx_clone.http, EditInteractionResponse::new().content(content)).await;
-        });
-
-        Ok(())
+            interaction
+                .edit_response(
+                    ctx.http,
+                    EditInteractionResponse::new().content(content),
+                )
+                .await?;
+            Ok(())
     }
 
     fn register(&self) -> CreateCommand {

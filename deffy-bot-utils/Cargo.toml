@@ -1,7 +1,7 @@
 [package]
-name = "deffy-bot-encryption"
+name = "deffy-bot-utils"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-rbase64 = { workspace = true}
+serenity = {workspace = true}

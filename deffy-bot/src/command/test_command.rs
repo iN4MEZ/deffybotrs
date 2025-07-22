@@ -1,7 +1,7 @@
 
 use serenity::{
-    all::{Context, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage, Interaction},
-    async_trait,
+    all::{CommandInteraction, Context, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage},
+    async_trait, Error,
 };
 
 use crate::command::command_registry::{CommandHandler, CommandInfo};
@@ -10,35 +10,19 @@ pub struct TestCommand;
 
 #[async_trait]
 impl CommandHandler for TestCommand {
-    async fn execute(&self, ctx: Context, data: Interaction) -> Result<(), std::io::Error> {
-        tracing::info!("TestCommand executed");
-
-        let interaction = match data.as_command() {
-            Some(c) => c.clone(),
-            None => {
-                tracing::error!("Interaction is not a command");
-                return Err(std::io::Error::new(std::io::ErrorKind::Other, "Interaction is not a command"));
-            }
-        };
-
-        let ctx_clone = ctx.clone();
-        tokio::spawn(async move {
-            let content = format!(
-                "Hello, {} This is a test command response.",
-                interaction.user.name
-            );
-
-             let response = CreateInteractionResponse::Message(
-            CreateInteractionResponseMessage::new().content(content),
+    async fn execute(&self, ctx: Context, interaction: CommandInteraction) -> Result<(), Error> {
+        let content = format!(
+            "Hello, {} This is a test command response.",
+            interaction.user.name
         );
 
-        let _ = interaction
-            .create_response(ctx_clone.http, response)
-            .await;
-        
-        });
+         let response = CreateInteractionResponse::Message(
+        CreateInteractionResponseMessage::new().content(content),
+    );
 
-        Ok(())
+    interaction
+        .create_response(ctx.http, response)
+        .await
     }
     fn register(&self) -> CreateCommand {
         CreateCommand::new(self.name())

@@ -2,8 +2,9 @@
 members = [
     "deffy-bot",
     "handler_macro",
-    "deffy-bot-encryption"
-]
+    "deffy-bot-encryption",
+    "deffy-bot-patreon-services"
+    , "deffy-bot-utils"]
 
 [workspace.dependencies]
 serenity = "0.12"
@@ -11,3 +12,5 @@ tokio = { version = "1.46.1", features = ["full"] }
 dotenv = "0.15.0"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19" , features = ["env-filter"] }
+rbase64 = "2.0.3"
+deffy-bot-patreon-services = { path = "deffy-bot-patreon-services"}

@@ -1,5 +1,6 @@
 
-use serenity::{all::{Context, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage, Interaction}, async_trait};
+use deffy_bot_encryption::EncrytionHelper;
+use serenity::{all::{CommandInteraction, Context, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage}, async_trait, Error};
 
 use crate::command::command_registry::{CommandHandler, CommandInfo};
 
@@ -7,21 +8,14 @@ pub struct KeyCommand;
 
 #[async_trait]
 impl CommandHandler for KeyCommand {
-    async fn execute(&self, ctx: Context, data: Interaction) -> Result<(), std::io::Error> {
+    async fn execute(&self, ctx: Context, interaction: CommandInteraction) -> Result<(), Error> {
 
-        let interaction = match data.as_command() {
-            Some(c) => c.clone(),
-            None => {
-                tracing::error!("Interaction is not a command");
-                return Err(std::io::Error::new(std::io::ErrorKind::Other, "Interaction is not a command"));
-            }
-        };
+        let enc = EncrytionHelper::encrypt("hello");
 
-        let ctx_clone = ctx.clone();
-        tokio::spawn(async move {
-            let content = format!(
-                "{}. Key: 100",
-                interaction.user.name
+        let content = format!(
+                "{}. Key: {}",
+                interaction.user.name,
+                enc
 
             );
 
@@ -29,15 +23,9 @@ impl CommandHandler for KeyCommand {
             CreateInteractionResponseMessage::new().content(content).ephemeral(true),
         );
 
-        let result = interaction
-            .create_response(ctx_clone.http, response)
-            .await;
-            if let Err(e) = result {
-                tracing::error!("Failed to create response: {}", e);
-            }
-        });
-
-        Ok(())
+        interaction
+        .create_response(ctx.http, response)
+        .await
         
     }
     fn register(&self) -> CreateCommand {

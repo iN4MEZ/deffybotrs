@@ -1,10 +1,10 @@
 use std::{result, sync::Arc};
 
-use serenity::{all::{Context, CreateCommand, Interaction}, async_trait};
+use serenity::{all::{CommandInteraction, Context, CreateCommand}, async_trait, Error};
 
 #[async_trait]
 pub trait CommandHandler: Send + Sync + 'static + CommandInfo {
-    async fn execute(&self, ctx: Context,data: Interaction) -> result::Result<(), std::io::Error>;
+    async fn execute(&self, ctx: Context,interaction: CommandInteraction) -> result::Result<(), Error>;
     fn register(&self) -> CreateCommand;
 }
 
