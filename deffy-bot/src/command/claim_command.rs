@@ -24,14 +24,12 @@ impl CommandHandler for ClaimCommand {
     ) -> Result<(), Error> {
         let content = format!("Key: ZX",);
 
-            // Api Clinet
+            // Api Client 
             let api = PatreonApi {
                 access_token: env::var("PATREON_ACCESS_TOKEN")
                     .expect("PATREON_ACCESS_TOKEN must be set"),
                 ..Default::default()
             };
-
-            //let creator = serde_json::f
 
             let result = api.identity_include_memberships().await;
 

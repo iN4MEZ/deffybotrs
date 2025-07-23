@@ -53,7 +53,7 @@ impl CommandManager {
                 (create_command, handler),
             );
 
-            tracing::info!("Registered Command: {:?}_COMMAND", name.to_uppercase());
+            tracing::info!("Registered Command: {}_COMMAND", name.to_uppercase());
         }
     }
 
