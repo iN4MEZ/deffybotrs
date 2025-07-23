@@ -45,7 +45,7 @@ async fn start_http() -> Result<(), std::io::Error> {
         .route("/", get(root))
         .layer(middleware::from_fn(log_middleware));
 
-        let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+        let addr = SocketAddr::from(([0, 0, 0, 0], 10000));
 
         tracing::info!("Listening on {}", addr);
         
