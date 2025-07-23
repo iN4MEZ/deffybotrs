@@ -22,9 +22,12 @@ impl CommandHandler for TestCommand {
         CreateInteractionResponseMessage::new().content(content),
     );
 
-    interaction
+    let result = interaction
         .create_response(ctx.http, response)
-        .await
+        .await?;
+
+    Ok(result)
+
     }
     fn register(&self) -> CreateCommand {
         CreateCommand::new(self.name())

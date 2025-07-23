@@ -10,7 +10,7 @@ use tokio::net::TcpListener;
 
 use crate::event::manager::MasterHandler;
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
 
     if let Err(_) = dotenv() {
