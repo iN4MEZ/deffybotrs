@@ -16,6 +16,7 @@ async fn on_message(ctx: Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) 
         interaction.downcast_ref::<serenity::model::prelude::Interaction>()
     {
         let interaction = interaction_ref.clone();
+
         if let Some(command) = &interaction.as_command() {
             let handler_opt = {
                 let guard = COMMAND_MANAGER.lock().unwrap();
@@ -44,7 +45,7 @@ async fn on_message(ctx: Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) 
                         if let Err(e) = handler.execute(ctx_clone, interaction_hander_clone).await {
                             tracing::error!("Error executing command: {}", e);
 
-                            let _rsp = interaction
+                            if let Err(e) =  interaction
                                 .create_response(
                                     ctx.http,
                                     CreateInteractionResponse::Message(
@@ -53,7 +54,9 @@ async fn on_message(ctx: Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) 
                                             .ephemeral(true),
                                     ),
                                 )
-                                .await;
+                                .await {
+                                    tracing::error!("Error sending response: {}", e);
+                                }
                         }
                     });
                 },
