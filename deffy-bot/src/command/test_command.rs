@@ -1,11 +1,13 @@
 
+use deffy_bot_macro::command;
 use serenity::{
     all::{CommandInteraction, Context, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage},
     async_trait, Error,
 };
 
-use crate::command::command_registry::{CommandHandler, CommandInfo};
+use crate::command::manager::{CommandHandler, CommandInfo};
 
+#[command(cmd = test)]
 pub struct TestCommand;
 
 #[async_trait]
@@ -32,11 +34,5 @@ impl CommandHandler for TestCommand {
                 "input",
                 "An input string for testing",
             ).required(true))
-    }
-}
-
-impl CommandInfo for TestCommand {
-    fn name(&self) -> &'static str {
-        "test"
     }
 }

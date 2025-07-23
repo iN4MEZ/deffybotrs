@@ -1,5 +1,6 @@
 use std::env;
 
+use deffy_bot_macro::command;
 use deffy_bot_patreon_services::PatreonApi;
 use serenity::{
     all::{
@@ -9,8 +10,9 @@ use serenity::{
     async_trait, Error,
 };
 
-use crate::command::command_registry::{CommandHandler, CommandInfo};
+use crate::command::manager::CommandHandler;
 
+#[command(cmd = claim)]
 pub struct ClaimCommand;
 
 #[async_trait]
@@ -49,11 +51,5 @@ impl CommandHandler for ClaimCommand {
 
     fn register(&self) -> CreateCommand {
         CreateCommand::new("claim").description("Claim a your key")
-    }
-}
-
-impl CommandInfo for ClaimCommand {
-    fn name(&self) -> &'static str {
-        "claim"
     }
 }

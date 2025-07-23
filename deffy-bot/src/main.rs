@@ -6,7 +6,7 @@ mod command;
 
 use serenity::{all::GatewayIntents, Client};
 
-use crate::event::event_registry::MasterHandler;
+use crate::event::manager::MasterHandler;
 
 #[tokio::main]
 async fn main() {

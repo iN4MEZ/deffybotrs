@@ -1,7 +1,7 @@
 use std::{any::Any, sync::{Arc, Mutex}};
 
+use deffy_bot_macro::event;
 use deffy_bot_utils::ModalBuilder;
-use handler_macro::event;
 use serenity::all::{Context, CreateInteractionResponse, CreateInteractionResponseMessage};
 
 #[event(e = interaction_create)]

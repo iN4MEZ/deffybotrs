@@ -3,7 +3,7 @@ extern crate proc_macro;
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Ident, ItemFn, Token};
+use syn::{parse_macro_input, Ident, ItemFn, ItemStruct, Token};
 use syn::parse::{Parse, ParseStream};
 
 struct EventFnArgs {
@@ -39,7 +39,7 @@ pub fn event(attr: TokenStream, item: TokenStream) -> TokenStream {
         struct #registry_struct;
 
         #[serenity::async_trait]
-        impl crate::event::event_registry::Hookable for #registry_struct {
+        impl crate::event::manager::Hookable for #registry_struct {
             async fn call(&self, event: &str, ctx: serenity::prelude::Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) {
                 if event == stringify!(#e_expr) {
 
@@ -54,7 +54,52 @@ pub fn event(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         inventory::submit! {
-            &#registry_struct as &dyn crate::event::event_registry::Hookable
+            &#registry_struct as &dyn crate::event::manager::Hookable
+        }
+    };
+
+    TokenStream::from(expanded)
+}
+
+/// Parse `cmd = test`
+struct CommandAttrArgs {
+    cmd_ident: Ident,
+}
+
+impl Parse for CommandAttrArgs {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let key: Ident = input.parse()?;         // should be `cmd`
+        input.parse::<Token![=]>()?;
+        if key != "cmd" {
+            return Err(syn::Error::new(key.span(), "expected `cmd = ...`"));
+        }
+        let value: Ident = input.parse()?;       // actual command name
+        Ok(CommandAttrArgs { cmd_ident: value })
+    }
+}
+
+
+#[proc_macro_attribute]
+pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(attr as CommandAttrArgs);
+    let input = parse_macro_input!(item as ItemStruct);
+
+    let cmd_name = args.cmd_ident.to_string();
+    let struct_name = &input.ident;
+
+    let expanded = quote! {
+        #input
+    
+        impl crate::command::manager::CommandInfo for #struct_name {
+            fn name(&self) -> &'static str {
+                #cmd_name
+            }
+        }
+    
+        inventory::submit! {
+            crate::command::manager::CommandRegistration {
+                constructor: || std::sync::Arc::new(#struct_name),
+            }
         }
     };
 

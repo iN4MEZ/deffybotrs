@@ -1,7 +1,9 @@
+use deffy_bot_macro::command;
 use serenity::{all::{CommandInteraction, Context, CreateCommand}, async_trait, Error};
 
-use crate::command::command_registry::{CommandHandler, CommandInfo};
+use crate::command::manager::CommandHandler;
 
+#[command(cmd = dl)]
 pub struct DownloadCommand;
 
 #[async_trait]
@@ -13,11 +15,5 @@ impl CommandHandler for DownloadCommand {
     fn register(&self) -> CreateCommand {
         CreateCommand::new("download")
             .description("Download a file from the internet")
-    }
-}
-
-impl CommandInfo for DownloadCommand {
-    fn name(&self) -> &'static str {
-        "download"
     }
 }

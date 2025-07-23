@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "deffy-bot",
-    "handler_macro",
+    "deffy-bot-macro",
     "deffy-bot-encryption",
     "deffy-bot-patreon-services"
     , "deffy-bot-utils"]

@@ -1,9 +1,11 @@
 
 use deffy_bot_encryption::EncrytionHelper;
+use deffy_bot_macro::command;
 use serenity::{all::{CommandInteraction, Context, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage}, async_trait, Error};
 
-use crate::command::command_registry::{CommandHandler, CommandInfo};
+use crate::command::manager::{CommandHandler, CommandInfo};
 
+#[command(cmd = key)]
 pub struct KeyCommand;
 
 #[async_trait]
@@ -33,11 +35,4 @@ impl CommandHandler for KeyCommand {
             .description("A key command for testing")
     }
 
-}
-
-impl CommandInfo for KeyCommand {
-    fn name(&self) -> &'static str {
-        "key"
-    }
-    
 }

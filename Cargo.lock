@@ -332,6 +332,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "deffy-bot-macro"
+version = "0.1.0"
+dependencies = [
+ "convert_case",
+ "inventory",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.104",
+]
+
+[[package]]
 name = "deffy-bot-patreon-services"
 version = "0.1.0"
 dependencies = [
@@ -361,10 +372,10 @@ name = "deffybot"
 version = "0.1.0"
 dependencies = [
  "deffy-bot-encryption",
+ "deffy-bot-macro",
  "deffy-bot-patreon-services",
  "deffy-bot-utils",
  "dotenv",
- "handler_macro",
  "inventory",
  "once_cell",
  "rbase64",
@@ -668,17 +679,6 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
-]
-
-[[package]]
-name = "handler_macro"
-version = "0.1.0"
-dependencies = [
- "convert_case",
- "inventory",
- "proc-macro2",
- "quote",
- "syn 2.0.104",
 ]
 
 [[package]]

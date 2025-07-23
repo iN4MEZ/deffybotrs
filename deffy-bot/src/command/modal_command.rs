@@ -1,8 +1,10 @@
+use deffy_bot_macro::command;
 use deffy_bot_utils::ModalBuilder;
 use serenity::{all::{CommandInteraction, Context, CreateCommand}, async_trait, Error};
 
-use crate::command::command_registry::{CommandHandler, CommandInfo};
+use crate::command::manager::{CommandHandler, CommandInfo};
 
+#[command(cmd = modal)]
 pub struct ModalCommand;
 
 #[async_trait]
@@ -20,11 +22,5 @@ impl CommandHandler for ModalCommand {
     fn register(&self) -> CreateCommand {
         CreateCommand::new(self.name())
             .description("test modal")
-    }
-}
-
-impl CommandInfo for ModalCommand {
-    fn name(&self) -> &'static str {
-        "modal"
     }
 }

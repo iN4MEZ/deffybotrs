@@ -1,70 +1,67 @@
+use deffy_bot_macro::command;
 use serenity::{
+    Error,
     all::{
-        CommandInteraction, Context, CreateAttachment, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse, EditProfile, Permissions
+        CommandInteraction, Context, CreateAttachment, CreateCommand, CreateCommandOption,
+        CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse,
+        EditProfile, Permissions,
     },
-    async_trait, Error,
+    async_trait,
 };
 
-use crate::command::command_registry::{CommandHandler, CommandInfo};
+use crate::command::manager::{CommandHandler, CommandInfo};
 
+#[command(cmd = profile)]
 pub struct ProfileCommand;
 
 #[async_trait]
 impl CommandHandler for ProfileCommand {
     async fn execute(&self, ctx: Context, interaction: CommandInteraction) -> Result<(), Error> {
+        interaction
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Defer(CreateInteractionResponseMessage::new()),
+            )
+            .await?;
 
-         interaction.create_response(&ctx.http, CreateInteractionResponse::Defer(CreateInteractionResponseMessage::new())).await?;
+        if let Some(input) = interaction.data.options.get(0) {
+            match input.value.as_str() {
+                Some("p") => {
+                    let att = create_att(&interaction)
+                        .await?;
 
-            if let Some(input) = interaction.data.options.get(0) {
-                match input.value.as_str() {
-                    Some("p") => {
-                        tracing::info!("Profile command executed with type: profile");
-
-                        let att = create_att(&interaction).await.expect("Not found Interaction");
-
-                        if let Err(err) = ctx
-                            .http
-                            .edit_profile(&EditProfile::new().avatar(&att))
-                            .await
-                        {
-                            tracing::error!("Failed to update avatar: {:?}", err);
-                        } else {
-                            tracing::info!("Avatar updated successfully!");
-                        }
-                    }
-                    Some("b") => {
-                        tracing::info!("Profile command executed with type: banner");
-
-                        let att = create_att(&interaction).await.unwrap();
-
-                        if let Err(err) = ctx
-                            .http
-                            .edit_profile(&EditProfile::new().banner(&att))
-                            .await
-                        {
-                            tracing::error!("Failed to update banner: {:?}", err);
-                        } else {
-                            tracing::info!("Banner updated successfully!");
-                        }
-                    }
-                    _ => {
-                        tracing::warn!("Unknown profile command type");
+                    if let Err(err) = ctx
+                        .http
+                        .edit_profile(&EditProfile::new().avatar(&att))
+                        .await
+                    {
+                        tracing::error!("Failed to update avatar: {:?}", err);
                     }
                 }
-            } else {
-                tracing::warn!("ProfileCommand executed without input");
-            }
-            let content = format!(
-                "All Profile information retrieved successfully."
-            );
+                Some("b") => {
+                    let att = create_att(&interaction).await?;
 
-            interaction
-                .edit_response(
-                    ctx.http,
-                    EditInteractionResponse::new().content(content),
-                )
-                .await?;
-            Ok(())
+                    if let Err(err) = ctx
+                        .http
+                        .edit_profile(&EditProfile::new().banner(&att))
+                        .await
+                    {
+                        tracing::error!("Failed to update banner: {:?}", err);
+                    }
+                }
+                _ => {
+                    tracing::warn!("Unknown profile command type");
+                }
+            }
+        } else {
+            tracing::warn!("ProfileCommand executed without input");
+        }
+        let content = format!("All Profile information retrieved successfully.");
+
+        interaction
+            .edit_response(ctx.http, EditInteractionResponse::new().content(content))
+            .await?;
+        Ok(())
     }
 
     fn register(&self) -> CreateCommand {
@@ -92,13 +89,7 @@ impl CommandHandler for ProfileCommand {
     }
 }
 
-impl CommandInfo for ProfileCommand {
-    fn name(&self) -> &'static str {
-        "profile"
-    }
-}
-
-pub async fn create_att(interaction: &CommandInteraction) -> Option<CreateAttachment> {
+pub async fn create_att(interaction: &CommandInteraction) -> Result<CreateAttachment,Error> {
     if let Some(attachment_opt) = interaction.data.options.get(1) {
         if let Some(file) = interaction
             .data
@@ -111,30 +102,34 @@ pub async fn create_att(interaction: &CommandInteraction) -> Option<CreateAttach
                 && file.content_type != Some("image/png".to_string())
             {
                 tracing::warn!("Invalid attachment type: {:?}", file.content_type);
-                return None;
+                return Err(Error::Format(std::fmt::Error));
             }
 
             let client = reqwest::Client::new();
             let response = client
                 .get(&file.url)
                 .send()
-                .await
-                .expect("Failed to download file");
+                .await;
+
+            let response = response.map_err(|_| {
+                Error::Other("Failed to send request")
+            })?;
 
             let data = response
                 .bytes()
                 .await
-                .expect("Failed to read response bytes");
+                .map_err(|_| {
+                    Error::Format(std::fmt::Error)
+                })?;
 
             tracing::info!("File downloaded successfully: {}", data.len());
 
-            return Some(CreateAttachment::bytes(data.to_vec(), "avatar.png"));
+            return Ok(CreateAttachment::bytes(data.to_vec(), "avatar.png"));
+        
         } else {
-            tracing::warn!("No valid attachment provided");
+            return Err(Error::Other("No valid attachment provided"));
         }
     } else {
-        tracing::warn!("No attachment option found");
+        return Err(Error::Other("Attachment not found"));
     }
-
-    None
 }
