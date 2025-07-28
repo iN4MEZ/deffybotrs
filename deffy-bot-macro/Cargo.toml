@@ -2,6 +2,7 @@
 name = "deffy-bot-macro"
 version = "0.1.0"
 edition = "2024"
+authors = ["IN4MEZ"]
 
 [lib]
 proc-macro = true

@@ -5,9 +5,7 @@ use deffy_bot_macro::command;
 use serde::Deserialize;
 use serenity::{
     all::{
-        ButtonStyle, CommandDataOption, CommandInteraction, Context, CreateActionRow, CreateButton,
-        CreateCommand, CreateCommandOption, CreateEmbed, CreateInteractionResponse,
-        CreateInteractionResponseMessage, CreateMessage, EditMessage,
+        ButtonStyle, CommandDataOption, CommandInteraction, ComponentInteraction, Context, CreateActionRow, CreateButton, CreateCommand, CreateCommandOption, CreateEmbed, CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage, EditMessage
     },
     async_trait,
 };
@@ -114,6 +112,15 @@ impl CommandHandler for EmbedCommand {
 
         Ok(())
     }
+
+    async fn execute_component(
+        &self,
+        ctx: Context,
+        interaction: ComponentInteraction,
+    ) -> Result<(), Error> {
+        Ok(())
+    }
+
     fn register(&self) -> CreateCommand {
         CreateCommand::new(self.name())
             .description("A Embed Creation Command")

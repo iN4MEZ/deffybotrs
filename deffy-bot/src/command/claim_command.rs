@@ -5,8 +5,7 @@ use deffy_bot_macro::command;
 use deffy_bot_patreon_services::PatreonApi;
 use serenity::{
     all::{
-        CommandInteraction, Context, CreateCommand, CreateInteractionResponse,
-        CreateInteractionResponseMessage, CreateMessage,
+        CommandInteraction, ComponentInteraction, Context, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage
     },
     async_trait,
 };
@@ -48,6 +47,14 @@ impl CommandHandler for ClaimCommand {
 
             Ok(())
             
+    }
+
+    async fn execute_component(
+        &self,
+        ctx: Context,
+        interaction: ComponentInteraction,
+    ) -> Result<(), Error> {
+        Ok(())
     }
 
     fn register(&self) -> CreateCommand {

@@ -3,8 +3,7 @@ use deffy_bot_encryption::EncrytionHelper;
 use deffy_bot_macro::command;
 use serenity::{
     all::{
-        CommandInteraction, Context, CreateCommand, CreateInteractionResponse,
-        CreateInteractionResponseMessage,
+        CommandInteraction, ComponentInteraction, Context, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage
     },
     async_trait,
 };
@@ -32,6 +31,15 @@ impl CommandHandler for KeyCommand {
         Ok(())
 
     }
+
+    async fn execute_component(
+        &self,
+        ctx: Context,
+        interaction: ComponentInteraction,
+    ) -> Result<(), Error> {
+        Ok(())
+    }
+
     fn register(&self) -> CreateCommand {
         CreateCommand::new(self.name()).description("A key command for testing")
     }

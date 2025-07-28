@@ -2,7 +2,7 @@ use anyhow::Error;
 use deffy_bot_macro::command;
 use deffy_bot_utils::ModalBuilder;
 use serenity::{
-    all::{CommandInteraction, Context, CreateCommand},
+    all::{CommandInteraction, ComponentInteraction, Context, CreateCommand},
     async_trait,
 };
 
@@ -25,6 +25,14 @@ impl CommandHandler for ModalCommand {
 
         interaction.create_response(ctx.http, modal).await?;
 
+        Ok(())
+    }
+
+    async fn execute_component(
+        &self,
+        ctx: Context,
+        interaction: ComponentInteraction,
+    ) -> Result<(), Error> {
         Ok(())
     }
 

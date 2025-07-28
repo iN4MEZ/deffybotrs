@@ -5,6 +5,7 @@ members = [
     "deffy-bot-encryption",
     "deffy-bot-patreon-services"
     , "deffy-bot-utils"]
+resolver = "3"
 
 [workspace.dependencies]
 serenity = { git = "https://github.com/serenity-rs/serenity", branch = "current"}

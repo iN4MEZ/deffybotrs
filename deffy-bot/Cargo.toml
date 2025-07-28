@@ -2,6 +2,7 @@
 name = "deffybot"
 version = "0.1.0"
 edition = "2024"
+authors = ["IN4MEZ"]
 
 [dependencies]
 axum = { version = "0.8.4", features = ["tokio","http1","macros"] }

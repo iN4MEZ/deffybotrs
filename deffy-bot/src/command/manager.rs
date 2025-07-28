@@ -6,9 +6,15 @@ use std::{
 
 use anyhow::Error;
 use serenity::{
-    all::{CommandInteraction, Context, CreateCommand},
+    all::{CommandInteraction, ComponentInteraction, Context, CreateCommand},
     async_trait,
 };
+
+#[derive(Debug, Clone)]
+pub enum InteractionWrapper {
+    Command(CommandInteraction),
+    Component(ComponentInteraction)
+}
 
 inventory::collect!(CommandRegistration);
 
@@ -18,6 +24,11 @@ pub trait CommandHandler: Send + Sync + 'static + CommandInfo {
         &self,
         ctx: Context,
         interaction: CommandInteraction,
+    ) -> result::Result<(), Error>;
+    async fn execute_component(
+        &self,
+        ctx: Context,
+        interaction: ComponentInteraction,
     ) -> result::Result<(), Error>;
     fn register(&self) -> CreateCommand;
 }

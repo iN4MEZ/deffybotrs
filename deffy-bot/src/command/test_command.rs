@@ -1,9 +1,11 @@
-
 use anyhow::Error;
 use deffy_bot_macro::command;
 use serenity::{
-    all::{CommandInteraction, Context, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage},
-    async_trait
+    all::{
+        CommandInteraction, ComponentInteraction, Context, CreateCommand, CreateCommandOption,
+        CreateInteractionResponse, CreateInteractionResponseMessage,
+    },
+    async_trait,
 };
 
 use crate::command::manager::{CommandHandler, CommandInfo};
@@ -19,24 +21,44 @@ impl CommandHandler for TestCommand {
             interaction.user.name
         );
 
-         let response = CreateInteractionResponse::Message(
-        CreateInteractionResponseMessage::new().content(content),
-    );
+        let response = CreateInteractionResponse::Message(
+            CreateInteractionResponseMessage::new().content(content),
+        );
 
-    let result = interaction
-        .create_response(ctx.http, response)
-        .await?;
+        let result = interaction.create_response(ctx.http, response).await?;
 
-    Ok(result)
-
+        Ok(result)
     }
+
+    async fn execute_component(
+        &self,
+        ctx: Context,
+        interaction: ComponentInteraction,
+    ) -> Result<(), Error> {
+        let content = format!(
+            "Hello, {} This is a test command response.",
+            interaction.user.name
+        );
+
+        let response = CreateInteractionResponse::Message(
+            CreateInteractionResponseMessage::new().content(content),
+        );
+
+        let result = interaction.create_response(ctx.http, response).await?;
+
+        Ok(result)
+    }
+
     fn register(&self) -> CreateCommand {
         CreateCommand::new(self.name())
             .description("A test command")
-            .add_option(CreateCommandOption::new(
-                serenity::all::CommandOptionType::String,
-                "input",
-                "An input string for testing",
-            ).required(true))
+            .add_option(
+                CreateCommandOption::new(
+                    serenity::all::CommandOptionType::String,
+                    "input",
+                    "An input string for testing",
+                )
+                .required(true),
+            )
     }
 }

@@ -1,6 +1,6 @@
 use anyhow::Error;
 use deffy_bot_macro::command;
-use serenity::{all::{CommandInteraction, Context, CreateCommand}, async_trait};
+use serenity::{all::{CommandInteraction, ComponentInteraction, Context, CreateCommand}, async_trait};
 
 use crate::command::manager::CommandHandler;
 
@@ -10,6 +10,13 @@ pub struct DownloadCommand;
 #[async_trait]
 impl CommandHandler for DownloadCommand {
     async fn execute(&self, _ctx: Context, _data: CommandInteraction) -> Result<(), Error> {
+        Ok(())
+    }
+    async fn execute_component(
+        &self,
+        ctx: Context,
+        interaction: ComponentInteraction,
+    ) -> Result<(), Error> {
         Ok(())
     }
 
