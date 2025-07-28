@@ -1,13 +1,14 @@
 use std::env;
 
+use anyhow::{Error, Ok};
 use deffy_bot_macro::command;
 use deffy_bot_patreon_services::PatreonApi;
 use serenity::{
     all::{
         CommandInteraction, Context, CreateCommand, CreateInteractionResponse,
-        CreateInteractionResponseMessage,
+        CreateInteractionResponseMessage, CreateMessage,
     },
-    async_trait, Error,
+    async_trait,
 };
 
 use crate::command::manager::CommandHandler;
@@ -31,10 +32,10 @@ impl CommandHandler for ClaimCommand {
                 ..Default::default()
             };
 
-            let result = api.identity_include_memberships().await;
+            let data = api.all_members().await?;
 
-            if let Ok(data) = result {
-                tracing::info!("{:?}", data.1);
+            for mem in data {
+                interaction.channel_id.send_message(&ctx.http, CreateMessage::new().content(format!("{:?}", mem.attributes.email))).await?;
             }
 
             let response = CreateInteractionResponse::Message(
@@ -43,7 +44,9 @@ impl CommandHandler for ClaimCommand {
                     .ephemeral(true),
             );
 
-            interaction.create_response(ctx.http, response).await
+            interaction.create_response(ctx.http, response).await?;
+
+            Ok(())
             
     }
 

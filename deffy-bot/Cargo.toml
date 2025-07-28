@@ -20,3 +20,4 @@ rbase64 = { workspace = true }
 deffy-bot-encryption = {path = "../deffy-bot-encryption"}
 deffy-bot-patreon-services = {workspace = true}
 deffy-bot-utils = { path = "../deffy-bot-utils"}
+anyhow = {workspace = true}

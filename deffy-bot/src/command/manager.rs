@@ -4,8 +4,8 @@ use std::{
     sync::{Arc},
 };
 
+use anyhow::Error;
 use serenity::{
-    Error,
     all::{CommandInteraction, Context, CreateCommand},
     async_trait,
 };

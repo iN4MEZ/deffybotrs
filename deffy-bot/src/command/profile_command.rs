@@ -1,6 +1,6 @@
+use anyhow::Error;
 use deffy_bot_macro::command;
 use serenity::{
-    Error,
     all::{
         CommandInteraction, Context, CreateAttachment, CreateCommand, CreateCommandOption,
         CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse,
@@ -102,7 +102,7 @@ pub async fn create_att(interaction: &CommandInteraction) -> Result<CreateAttach
                 && file.content_type != Some("image/png".to_string())
             {
                 tracing::warn!("Invalid attachment type: {:?}", file.content_type);
-                return Err(Error::Format(std::fmt::Error));
+                return Err(anyhow::anyhow!(std::fmt::Error));
             }
 
             let client = reqwest::Client::new();
@@ -112,14 +112,14 @@ pub async fn create_att(interaction: &CommandInteraction) -> Result<CreateAttach
                 .await;
 
             let response = response.map_err(|_| {
-                Error::Other("Failed to send request")
+                anyhow::anyhow!("Failed to send request")
             })?;
 
             let data = response
                 .bytes()
                 .await
                 .map_err(|_| {
-                    Error::Format(std::fmt::Error)
+                    anyhow::anyhow!(std::fmt::Error)
                 })?;
 
             tracing::info!("File downloaded successfully: {}", data.len());
@@ -127,9 +127,9 @@ pub async fn create_att(interaction: &CommandInteraction) -> Result<CreateAttach
             return Ok(CreateAttachment::bytes(data.to_vec(), "avatar.png"));
         
         } else {
-            return Err(Error::Other("No valid attachment provided"));
+            return Err(anyhow::anyhow!("No valid attachment provided"));
         }
     } else {
-        return Err(Error::Other("Attachment not found"));
+        return Err(anyhow::anyhow!("Attachment not found"));
     }
 }

@@ -55,7 +55,7 @@ async fn on_message(ctx: Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) 
                                     ),
                                 )
                                 .await {
-                                    tracing::error!("Error sending response: {}", e);
+                                    tracing::error!("Error: try to send error response: {}", e);
                                 }
                         }
                     });

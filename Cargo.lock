@@ -42,6 +42,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.98"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
+
+[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -275,8 +281,7 @@ dependencies = [
 [[package]]
 name = "command_attr"
 version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fcc89439e1bb4e19050a9586a767781a3060000d2f3296fd2a40597ad9421c5"
+source = "git+https://github.com/serenity-rs/serenity?branch=current#25b2820170dd68a5e75422c4066f674d4b350850"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -413,6 +418,7 @@ name = "deffy-bot-patreon-services"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "dotenv",
  "hex",
  "hmac",
  "md-5",
@@ -423,6 +429,7 @@ dependencies = [
  "sha2",
  "tokio",
  "tracing",
+ "tracing-subscriber",
  "url",
 ]
 
@@ -437,6 +444,7 @@ dependencies = [
 name = "deffybot"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axum",
  "deffy-bot-encryption",
  "deffy-bot-macro",
@@ -2025,8 +2033,7 @@ dependencies = [
 [[package]]
 name = "serenity"
 version = "0.12.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d72ec4323681bf9a3cabe40fd080abc2435859b502a1b5aa9bf693f125bfa76"
+source = "git+https://github.com/serenity-rs/serenity?branch=current#25b2820170dd68a5e75422c4066f674d4b350850"
 dependencies = [
  "arrayvec",
  "async-trait",

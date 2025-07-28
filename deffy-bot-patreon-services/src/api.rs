@@ -1,7 +1,7 @@
 use crate::{ApiError, PatreonError, PatreonResult};
 use chrono::{DateTime, Utc};
 use serde_derive::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::{env, sync::Arc};
 use url::Url;
 
 static BASE_URI: &str = "https://www.patreon.com";
@@ -20,12 +20,57 @@ impl PatreonApi {
         self.call_data(request).await
     }
 
+    pub async fn all_members(&self) -> PatreonResult<Vec<Member>> {
+        let mut url = Url::parse(BASE_URI).unwrap();
+
+        let campaign_id = env::var("CAMPAIGN_ID").expect("Expected a token in the environment").to_string();
+
+        url.set_path(format!("/api/oauth2/v2/campaigns/{campaign_id}/members").as_str());
+
+        url.query_pairs_mut()
+            .append_pair("fields[member]", "full_name,email,patron_status");
+        let request = self.agent.get(url);
+
+        let first: PatreonResult<(Vec<Member>, Link<String>)> = self.call_data_and_link(request).await;
+
+        let mut all_data = Vec::new();
+        let (members, mut link) = match first {
+            Ok(res) => res,
+            Err(e) => return Err(e),
+        };
+
+        all_data.extend(members);
+
+        while let Some(next_url) = link.next {
+            if next_url.is_empty() {
+                break;
+            }
+
+            //println!("Next page available at: {}", next_url);
+
+            // ส่งคำขอใหม่ด้วย next_url
+            let next_request = Url::parse(&next_url).unwrap();
+            let request = self.agent.get(next_request);
+            let result: PatreonResult<(Vec<Member>, Link<String>)> = self.call_data_and_link(request).await;
+
+            match result {
+                Ok((new_members, new_link)) => {
+                    all_data.extend(new_members);
+                    link = new_link;
+                }
+                Err(e) => return Err(e),
+            }
+        }
+
+        PatreonResult::Ok(all_data)
+    }
+
     pub async fn identity(&self) -> PatreonResult<User> {
         self.call_data(self.identity_request(None)).await
     }
 
     pub async fn identity_include_memberships(&self) -> PatreonResult<(User, Vec<Member>)> {
-        self.call_data_and_include(self.identity_request(IdentityIncldue::Memberships))
+        self.call_data(self.identity_request(IdentityIncldue::Memberships))
             .await
     }
 
@@ -40,22 +85,28 @@ impl PatreonApi {
     ) -> reqwest::RequestBuilder {
         let mut url = Url::parse(BASE_URI).unwrap();
         url.set_path("api/oauth2/v2/identity");
-        url.query_pairs_mut().append_pair(
-            "fields[user]",
-            "first_name,last_name,full_name,vanity,email,about,image_url,thumb_url,created,url",
-        );
         let include = include.into();
         if let Some(include) = include {
-            url.query_pairs_mut()
-                .append_pair("include", include.as_str());
+            // url.query_pairs_mut()
+            //     .append_pair("include", include.as_str());
             match include {
                 IdentityIncldue::Memberships => {
-                    url.query_pairs_mut().append_pair(
-                        "fields[member]",
-                        "campaign_lifetime_support_cents,currently_entitled_amount_cents,email,full_name,is_follower,last_charge_date,last_charge_status,lifetime_support_cents,next_charge_date,note,patron_status,pledge_cadence,pledge_relationship_start,will_pay_amount_cents",
-                    );
+
+                    let campaign_id = env::var("CAMPAIGN_ID").expect("Expected a token in the environment").to_string();
+
+                    url.set_path(format!("/api/oauth2/v2/campaigns/{campaign_id}/members").as_str());
+
+                    url.query_pairs_mut()
+                        .append_pair("fields[member]", "full_name");
                 }
                 IdentityIncldue::Campaign => {
+                    url.query_pairs_mut()
+                        .append_pair("include", include.as_str());
+                    url.query_pairs_mut().append_pair(
+                    "fields[user]",
+                    "first_name,last_name,full_name,vanity,email,about,image_url,thumb_url,created,url",
+                     );
+
                     url.query_pairs_mut()
                         .append_pair("fields[campaign]", "created_at,creation_name,discord_server_id,google_analytics_id,has_rss,has_sent_rss_notify,image_small_url,image_url,is_charged_immediately,is_monthly,is_nsfw,main_video_embed,main_video_url,one_liner,patron_count,pay_per_name,pledge_url,published_at,rss_artwork_url,rss_feed_title,show_earnings,summary,thanks_embed,thanks_msg,thanks_video_url,url,vanity");
                 }
@@ -109,7 +160,22 @@ impl PatreonApi {
         request: reqwest::RequestBuilder,
     ) -> PatreonResult<T> {
         let json = self.api_call(request).await?;
+
+        //println!("{}",json.as_str());
         DocResponse::parse(json.as_str())
+    }
+
+    async fn call_data_and_link<D: for<'de> serde::Deserialize<'de>,
+    L: for<'de> serde::Deserialize<'de> + Default>(
+        &self,
+        request: reqwest::RequestBuilder,
+    ) -> PatreonResult<(D,L)> {
+        let json = self.api_call(request).await?;
+
+        //println!("{}",json.as_str());
+        let response = serde_json::from_str::<DocResponseWithLink<D, L>>(json.as_str())?;
+
+        Ok((response.data, response.links.unwrap_or_default()))
     }
 
     async fn call_data_and_include<
@@ -127,16 +193,23 @@ impl PatreonApi {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub(crate) struct DocResponse<D> {
-    data: D,
+    data: D
 }
 
-impl<T> DocResponse<T>
+impl<D> DocResponse<D>
 where
-    T: for<'de> serde::Deserialize<'de>,
+    D: for<'de> serde::Deserialize<'de>,
 {
-    pub(crate) fn parse(response: impl AsRef<[u8]>) -> PatreonResult<T> {
-        Ok(serde_json::from_slice::<DocResponse<T>>(response.as_ref())?.data)
+    pub(crate) fn parse(response: impl AsRef<[u8]>) -> PatreonResult<D> {
+        Ok(serde_json::from_slice::<DocResponse<D>>(response.as_ref())?.data)
     }
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub(crate) struct DocResponseWithLink<D,L> {
+    data: D,
+    #[serde(default)]
+    links: Option<L>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -145,6 +218,11 @@ pub(crate) struct DocResponseInclude<D, I> {
     #[serde(default)]
     // if not default and identity?include=campaign and not has it access in scopes be "missing field `included`"
     included: Vec<I>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct  Link<L> {
+    pub next: Option<L>
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -179,20 +257,20 @@ pub struct UserAttributes {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MemberAttributes {
-    pub campaign_lifetime_support_cents: i64,
-    pub currently_entitled_amount_cents: i64,
+    // pub campaign_lifetime_support_cents: i64,
+    // pub currently_entitled_amount_cents: i64,
     pub email: Option<String>,
     pub full_name: String,
-    pub is_follower: bool,
-    pub last_charge_date: Option<DateTime<Utc>>,
-    pub last_charge_status: Option<LastChrgeStatus>,
-    pub lifetime_support_cents: i64,
-    pub next_charge_date: Option<DateTime<Utc>>,
-    pub note: String,
+    // pub is_follower: bool,
+    // pub last_charge_date: Option<DateTime<Utc>>,
+    // pub last_charge_status: Option<LastChrgeStatus>,
+    // pub lifetime_support_cents: i64,
+    // pub next_charge_date: Option<DateTime<Utc>>,
+    // pub note: String,
     pub patron_status: Option<PatronStatus>,
-    pub pledge_cadence: Option<i64>,
-    pub pledge_relationship_start: DateTime<Utc>,
-    pub will_pay_amount_cents: i64,
+    // pub pledge_cadence: Option<i64>,
+    // pub pledge_relationship_start: DateTime<Utc>,
+    // pub will_pay_amount_cents: i64,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

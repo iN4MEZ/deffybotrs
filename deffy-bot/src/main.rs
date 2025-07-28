@@ -1,5 +1,5 @@
 use std::{env, net::{SocketAddr}, time::Instant};
-use axum::{body::Body, extract::ConnectInfo, http::Request, middleware::{self, Next}, response::Response, routing::get, Router};
+use axum::{body::Body, extract::ConnectInfo, http::Request, middleware::Next, response::Response, routing::get, Router};
 use dotenv::dotenv;
 
 mod event;
@@ -14,7 +14,7 @@ use crate::event::manager::MasterHandler;
 async fn main() {
 
     if let Err(_) = dotenv() {
-        println!("Failed to load .env file");
+        tracing::error!("Failed to load .env file");
     }
     
    tracing_subscriber::fmt().with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
@@ -27,7 +27,7 @@ async fn main() {
     });
 
 
-    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment").to_string();
     
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
@@ -42,8 +42,7 @@ async fn main() {
 
 async fn start_http() -> Result<(), std::io::Error> {
     let app = Router::new()
-        .route("/", get(root))
-        .layer(middleware::from_fn(log_middleware));
+        .route("/", get(root));
 
         let addr = SocketAddr::from(([0, 0, 0, 0], 10000));
 
@@ -57,7 +56,7 @@ async fn root() -> &'static str {
     "Hello, World!"
 }
 
-async fn log_middleware(
+async fn _log_middleware(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     req: Request<Body>,
     next: Next,

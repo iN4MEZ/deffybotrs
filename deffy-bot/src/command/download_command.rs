@@ -1,5 +1,6 @@
+use anyhow::Error;
 use deffy_bot_macro::command;
-use serenity::{all::{CommandInteraction, Context, CreateCommand}, async_trait, Error};
+use serenity::{all::{CommandInteraction, Context, CreateCommand}, async_trait};
 
 use crate::command::manager::CommandHandler;
 

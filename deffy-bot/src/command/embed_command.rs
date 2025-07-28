@@ -1,9 +1,9 @@
 use std::vec;
 
+use anyhow::Error;
 use deffy_bot_macro::command;
 use serde::Deserialize;
 use serenity::{
-    Error,
     all::{
         ButtonStyle, CommandDataOption, CommandInteraction, Context, CreateActionRow, CreateButton,
         CreateCommand, CreateCommandOption, CreateEmbed, CreateInteractionResponse,
@@ -95,7 +95,7 @@ impl CommandHandler for EmbedCommand {
                                 .edit_message(&ctx.http, MessageId::from(message_id), rsp.1)
                                 .await?;
                         } else {
-                            return Err(Error::Other("Missing Input"));
+                            return Err(anyhow::anyhow!("Missing Input"));
                         }
                     }
                 }
@@ -110,7 +110,9 @@ impl CommandHandler for EmbedCommand {
                 .ephemeral(true),
         );
 
-        interaction.create_response(ctx.http, response).await
+        interaction.create_response(ctx.http, response).await?;
+
+        Ok(())
     }
     fn register(&self) -> CreateCommand {
         CreateCommand::new(self.name())
@@ -166,7 +168,7 @@ fn generate_embed(content: CommandDataOption) -> Result<(CreateMessage, EditMess
 
         Ok((create_message, edit_message))
     } else {
-        Err(Error::Other("Missing Content Value"))
+        Err(anyhow::anyhow!("Missing Content Value"))
     }
 }
 
