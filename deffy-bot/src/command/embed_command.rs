@@ -5,12 +5,12 @@ use deffy_bot_macro::command;
 use serde::Deserialize;
 use serenity::{
     all::{
-        ButtonStyle, CommandDataOption, CommandInteraction, ComponentInteraction, Context, CreateActionRow, CreateButton, CreateCommand, CreateCommandOption, CreateEmbed, CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage, EditMessage
+        ButtonStyle, CommandDataOption, CommandInteraction, Context, CreateActionRow, CreateButton, CreateCommand, CreateCommandOption, CreateEmbed, CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage, EditMessage
     },
     async_trait,
 };
 
-use crate::command::manager::{CommandHandler, CommandInfo};
+use crate::command::system::manager::{CommandHandler, CommandInfo};
 
 #[derive(Deserialize)]
 struct EmbedJson {
@@ -110,14 +110,6 @@ impl CommandHandler for EmbedCommand {
 
         interaction.create_response(ctx.http, response).await?;
 
-        Ok(())
-    }
-
-    async fn execute_component(
-        &self,
-        ctx: Context,
-        interaction: ComponentInteraction,
-    ) -> Result<(), Error> {
         Ok(())
     }
 

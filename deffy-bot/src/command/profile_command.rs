@@ -2,12 +2,12 @@ use anyhow::Error;
 use deffy_bot_macro::command;
 use serenity::{
     all::{
-        CommandInteraction, ComponentInteraction, Context, CreateAttachment, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse, EditProfile, Permissions
+        CommandInteraction, Context, CreateAttachment, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse, EditProfile, Permissions
     },
     async_trait,
 };
 
-use crate::command::manager::{CommandHandler, CommandInfo};
+use crate::command::system::manager::{CommandHandler, CommandInfo};
 
 #[command(cmd = profile)]
 pub struct ProfileCommand;
@@ -59,14 +59,6 @@ impl CommandHandler for ProfileCommand {
         interaction
             .edit_response(ctx.http, EditInteractionResponse::new().content(content))
             .await?;
-        Ok(())
-    }
-
-    async fn execute_component(
-        &self,
-        ctx: Context,
-        interaction: ComponentInteraction,
-    ) -> Result<(), Error> {
         Ok(())
     }
 

@@ -40,7 +40,7 @@ pub fn event(attr: TokenStream, item: TokenStream) -> TokenStream {
 
         #[serenity::async_trait]
         impl crate::event::manager::Hookable for #registry_struct {
-            async fn call(&self, event: &str, ctx: serenity::prelude::Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) {
+            async fn call(&self, event: &str, ctx: serenity::prelude::Context, data: crate::event::manager::EventData) {
                 if event == stringify!(#e_expr) {
 
                     #fn_name(ctx, data).await;
@@ -48,9 +48,9 @@ pub fn event(attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
 
-            fn event_type(&self) -> &'static str {
-                stringify!(#e_expr)
-            }
+            // fn event_type(&self) -> &'static str {
+            //     stringify!(#e_expr)
+            // }
         }
 
         inventory::submit! {
@@ -90,14 +90,14 @@ pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {
     let expanded = quote! {
         #input
     
-        impl crate::command::manager::CommandInfo for #struct_name {
+        impl crate::command::system::manager::CommandInfo for #struct_name {
             fn name(&self) -> &'static str {
                 #cmd_name
             }
         }
     
         inventory::submit! {
-            crate::command::manager::CommandRegistration {
+            crate::command::system::manager::CommandRegistration {
                 constructor: || std::sync::Arc::new(#struct_name),
             }
         }

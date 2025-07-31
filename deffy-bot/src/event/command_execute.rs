@@ -1,66 +1,56 @@
-use std::{
-    any::Any,
-    sync::{Arc, Mutex},
-};
 use deffy_bot_macro::event;
-use serenity::{all::{
-    Context, CreateInteractionResponse, CreateInteractionResponseMessage,
-}};
+use serenity::all::{Context, CreateInteractionResponse, CreateInteractionResponseMessage};
 
-use crate::event::start_event::COMMAND_MANAGER;
+use crate::{command::system::manager::CommandJob, event::{manager::EventData, start_event::COMMAND_MANAGER}};
 
 #[event(e = interaction_create)]
-async fn on_message(ctx: Context, data: Arc<Mutex<Box<dyn Any + Send + Sync>>>) {
-    let interaction = data.lock().unwrap();
-    if let Some(interaction_ref) =
-        interaction.downcast_ref::<serenity::model::prelude::Interaction>()
-    {
-        let interaction = interaction_ref.clone();
-
-        if let Some(command) = &interaction.as_command() {
-            let handler_opt = {
-                let guard = COMMAND_MANAGER.lock().unwrap();
-                guard.get_handler(&command.data.name)
+pub async fn on_message(ctx: Context, data: EventData) {
+    if let EventData::Interaction(interaction) = data {
+        if let Some(command) = interaction.as_command() {
+            // 1. ดึง handler และ tx จาก COMMAND_MANAGER
+            let (handler_opt, tx_opt) = {
+                if let Some(manager) = COMMAND_MANAGER.get() {
+                    let guard = manager.lock().await;
+                    (
+                        guard.get_handler(&command.data.name),
+                        Some(guard.tx.clone()),
+                    )
+                } else {
+                    (None, None)
+                }
             };
 
-            handler_opt.map_or_else(
-                || {
-                    tracing::warn!("No handler found for command: {}", command.data.name);
-                },
-                |handler| {
-                    tracing::trace!("Executing command: {}", command.data.name);
-                    let ctx_clone = ctx.clone();
-                    let interaction_clone = interaction.clone();
-                    tokio::spawn(async move {
-                        let interaction = match interaction_clone.as_command() {
-                            Some(c) => c.clone(),
-                            None => {
-                                tracing::error!("Interaction is not a command");
-                                return;
-                            }
-                        };
+            match (handler_opt, tx_opt) {
+                (Some(handler), Some(tx)) => {
+                    tracing::trace!("Queueing command: {}", command.data.name);
 
-                        let interaction_hander_clone = interaction.clone();
+                    let job = CommandJob {
+                        ctx: ctx.clone(),
+                        interaction: command.clone(),
+                        handler,
+                    };
 
-                        if let Err(e) = handler.execute(ctx_clone, interaction_hander_clone).await {
-                            tracing::error!("Error executing command: {}", e);
+                    if let Err(e) = tx.send(job).await {
+                        tracing::error!("Failed to send job to queue: {:?}", e);
+                    }
+                }
 
-                            if let Err(e) =  interaction
-                                .create_response(
-                                    ctx.http,
-                                    CreateInteractionResponse::Message(
-                                        CreateInteractionResponseMessage::new()
-                                            .content(format!("An Command Error: {:?}", e))
-                                            .ephemeral(true),
-                                    ),
-                                )
-                                .await {
-                                    tracing::error!("Error: try to send error response: {}", e);
-                                }
-                        }
-                    });
-                },
-            );
+                _ => {
+                    tracing::warn!("No handler found or command system uninitialized for command: {}", command.data.name);
+
+                    // หากต้องการแจ้ง user ว่า command ใช้งานไม่ได้
+                    let _ = command
+                        .create_response(
+                            ctx.http,
+                            CreateInteractionResponse::Message(
+                                CreateInteractionResponseMessage::new()
+                                    .content("This command is currently unavailable.")
+                                    .ephemeral(true),
+                            ),
+                        )
+                        .await;
+                }
+            }
         }
     }
 }

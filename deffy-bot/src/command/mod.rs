@@ -1,4 +1,4 @@
-pub mod manager;
+pub mod system;
 pub mod key_command;
 pub mod profile_command;
 pub mod test_command;

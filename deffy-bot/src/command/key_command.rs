@@ -3,12 +3,12 @@ use deffy_bot_encryption::EncrytionHelper;
 use deffy_bot_macro::command;
 use serenity::{
     all::{
-        CommandInteraction, ComponentInteraction, Context, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage
+        CommandInteraction, Context, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage
     },
     async_trait,
 };
 
-use crate::command::manager::{CommandHandler, CommandInfo};
+use crate::command::system::manager::{CommandHandler, CommandInfo};
 
 #[command(cmd = key)]
 pub struct KeyCommand;
@@ -30,14 +30,6 @@ impl CommandHandler for KeyCommand {
 
         Ok(())
 
-    }
-
-    async fn execute_component(
-        &self,
-        ctx: Context,
-        interaction: ComponentInteraction,
-    ) -> Result<(), Error> {
-        Ok(())
     }
 
     fn register(&self) -> CreateCommand {

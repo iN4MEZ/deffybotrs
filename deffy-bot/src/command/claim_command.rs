@@ -5,55 +5,49 @@ use deffy_bot_macro::command;
 use deffy_bot_patreon_services::PatreonApi;
 use serenity::{
     all::{
-        CommandInteraction, ComponentInteraction, Context, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage
+        CommandInteraction, Context, CreateCommand, CreateInteractionResponse,
+        CreateInteractionResponseMessage, CreateMessage,
     },
     async_trait,
 };
 
-use crate::command::manager::CommandHandler;
+use crate::command::system::manager::CommandHandler;
 
 #[command(cmd = claim)]
 pub struct ClaimCommand;
 
 #[async_trait]
 impl CommandHandler for ClaimCommand {
-    async fn execute(
-        &self,
-        ctx: Context,
-        interaction: CommandInteraction,
-    ) -> Result<(), Error> {
+    async fn execute(&self, ctx: Context, interaction: CommandInteraction) -> Result<(), Error> {
         let content = format!("Key: ZX",);
 
-            // Api Client 
-            let api = PatreonApi {
-                access_token: env::var("PATREON_ACCESS_TOKEN")
-                    .expect("PATREON_ACCESS_TOKEN must be set"),
-                ..Default::default()
-            };
+        // Api Client
+        let api = PatreonApi {
+            access_token: env::var("PATREON_ACCESS_TOKEN")
+                .expect("PATREON_ACCESS_TOKEN must be set"),
+            ..Default::default()
+        };
 
-            let data = api.all_members().await?;
+        let data = api.all_members().await?;
 
-            for mem in data {
-                interaction.channel_id.send_message(&ctx.http, CreateMessage::new().content(format!("{:?}", mem.attributes.email))).await?;
-            }
+        for mem in data {
+            interaction
+                .channel_id
+                .send_message(
+                    &ctx.http,
+                    CreateMessage::new().content(format!("{:?}", mem.attributes.email)),
+                )
+                .await?;
+        }
 
-            let response = CreateInteractionResponse::Message(
-                CreateInteractionResponseMessage::new()
-                    .content(content)
-                    .ephemeral(true),
-            );
+        let response = CreateInteractionResponse::Message(
+            CreateInteractionResponseMessage::new()
+                .content(content)
+                .ephemeral(true),
+        );
 
-            interaction.create_response(ctx.http, response).await?;
+        interaction.create_response(ctx.http, response).await?;
 
-            Ok(())
-            
-    }
-
-    async fn execute_component(
-        &self,
-        ctx: Context,
-        interaction: ComponentInteraction,
-    ) -> Result<(), Error> {
         Ok(())
     }
 

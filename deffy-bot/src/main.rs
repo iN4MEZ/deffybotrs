@@ -6,9 +6,9 @@ mod event;
 mod command;
 
 use serenity::{all::GatewayIntents, Client};
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::mpsc};
 
-use crate::event::manager::MasterHandler;
+use crate::event::manager::{spawn_event_dispatcher, MasterHandler};
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
@@ -26,13 +26,17 @@ async fn main() {
         }
     });
 
+    let (tx, rx) = mpsc::channel(100);
+
+    spawn_event_dispatcher(rx).await;
+
 
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment").to_string();
     
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
-    let mut client = Client::builder(&token, intents).event_handler(MasterHandler).await.expect("Error creating client");
+    let mut client = Client::builder(&token, intents).event_handler(MasterHandler { tx }).await.expect("Error creating client");
 
     if let Err(why) = client.start().await {
         tracing::error!("Client error: {:?}", why);

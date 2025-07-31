@@ -2,13 +2,13 @@ use anyhow::Error;
 use deffy_bot_macro::command;
 use serenity::{
     all::{
-        CommandInteraction, ComponentInteraction, Context, CreateCommand, CreateCommandOption,
+        CommandInteraction, Context, CreateCommand, CreateCommandOption,
         CreateInteractionResponse, CreateInteractionResponseMessage,
     },
     async_trait,
 };
 
-use crate::command::manager::{CommandHandler, CommandInfo};
+use crate::command::system::manager::{CommandHandler, CommandInfo};
 
 #[command(cmd = test)]
 pub struct TestCommand;
@@ -16,25 +16,6 @@ pub struct TestCommand;
 #[async_trait]
 impl CommandHandler for TestCommand {
     async fn execute(&self, ctx: Context, interaction: CommandInteraction) -> Result<(), Error> {
-        let content = format!(
-            "Hello, {} This is a test command response.",
-            interaction.user.name
-        );
-
-        let response = CreateInteractionResponse::Message(
-            CreateInteractionResponseMessage::new().content(content),
-        );
-
-        let result = interaction.create_response(ctx.http, response).await?;
-
-        Ok(result)
-    }
-
-    async fn execute_component(
-        &self,
-        ctx: Context,
-        interaction: ComponentInteraction,
-    ) -> Result<(), Error> {
         let content = format!(
             "Hello, {} This is a test command response.",
             interaction.user.name

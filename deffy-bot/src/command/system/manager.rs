@@ -6,14 +6,16 @@ use std::{
 
 use anyhow::Error;
 use serenity::{
-    all::{CommandInteraction, ComponentInteraction, Context, CreateCommand},
+    all::{CommandInteraction, Context, CreateCommand},
     async_trait,
 };
+use tokio::sync::mpsc;
 
-#[derive(Debug, Clone)]
-pub enum InteractionWrapper {
-    Command(CommandInteraction),
-    Component(ComponentInteraction)
+#[derive(Clone)]
+pub struct CommandJob {
+    pub ctx: Context,
+    pub interaction: CommandInteraction,
+    pub handler: Arc<dyn CommandHandler>,
 }
 
 inventory::collect!(CommandRegistration);
@@ -24,11 +26,6 @@ pub trait CommandHandler: Send + Sync + 'static + CommandInfo {
         &self,
         ctx: Context,
         interaction: CommandInteraction,
-    ) -> result::Result<(), Error>;
-    async fn execute_component(
-        &self,
-        ctx: Context,
-        interaction: ComponentInteraction,
     ) -> result::Result<(), Error>;
     fn register(&self) -> CreateCommand;
 }
@@ -43,12 +40,14 @@ pub struct CommandRegistration {
 
 pub struct CommandManager {
     commands: HashMap<String, (CreateCommand, Arc<dyn CommandHandler>)>,
+    pub tx: tokio::sync::mpsc::Sender<CommandJob>,
 }
 
 impl CommandManager {
-    pub fn new() -> Self {
+    pub fn new(tx: mpsc::Sender<CommandJob>) -> Self {
         Self {
             commands: HashMap::new(),
+            tx,
         }
     }
 
@@ -75,4 +74,22 @@ impl CommandManager {
     pub fn get_handler(&self, name: &str) -> Option<Arc<dyn CommandHandler>> {
         self.commands.get(name).map(|(_, handler)| handler.clone())
     }
+}
+
+pub async fn spawn_command_worker(mut rx: tokio::sync::mpsc::Receiver<CommandJob>) {
+    tokio::spawn(async move {
+        while let Some(job) = rx.recv().await {
+            let CommandJob {
+                ctx,
+                interaction,
+                handler,
+            } = job;
+
+            tokio::spawn(async move {
+                if let Err(err) = handler.execute(ctx, interaction).await {
+                    tracing::error!("Command execution failed: {:?}", err);
+                }
+            });
+        }
+    });
 }

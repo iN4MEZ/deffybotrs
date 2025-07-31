@@ -16,3 +16,4 @@ tracing-subscriber = { version = "0.3.19" , features = ["env-filter"] }
 rbase64 = "2.0.3"
 deffy-bot-patreon-services = { path = "deffy-bot-patreon-services"}
 anyhow = "1.0.98"
+crossbeam = "0.8.4"
