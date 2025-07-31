@@ -57,7 +57,7 @@ enum MyComponentType {
     Button,
 }
 
-#[command(cmd = embed)]
+#[command(cmd = embed, cooldown = 0)]
 pub struct EmbedCommand;
 
 #[async_trait]

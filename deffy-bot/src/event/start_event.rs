@@ -1,6 +1,6 @@
 use std::{env, sync::{Arc}};
 use deffy_bot_macro::event;
-use once_cell::sync::{ OnceCell};
+use once_cell::sync::OnceCell;
 use serenity::all::{Context, GuildId};
 use tokio::sync::{mpsc, Mutex};
 

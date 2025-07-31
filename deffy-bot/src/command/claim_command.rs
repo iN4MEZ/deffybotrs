@@ -13,7 +13,7 @@ use serenity::{
 
 use crate::command::system::manager::CommandHandler;
 
-#[command(cmd = claim)]
+#[command(cmd = claim,cooldown = 0)]
 pub struct ClaimCommand;
 
 #[async_trait]

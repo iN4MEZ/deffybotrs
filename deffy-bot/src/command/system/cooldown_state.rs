@@ -1,21 +1,19 @@
-use serenity::prelude::*;
-use serenity::model::prelude::*;
 
-use std::{collections::HashMap, sync::Arc, time::{Duration, Instant}};
+use std::{collections::HashMap, time::{Duration, Instant}};
 use tokio::sync::Mutex;
 
-struct CooldownState {
+pub struct CooldownState {
     user_cooldowns: Mutex<HashMap<u64, Instant>>,
 }
 
 impl CooldownState {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             user_cooldowns: Mutex::new(HashMap::new()),
         }
     }
 
-    async fn check_and_update(&self, user_id: u64, cooldown: Duration) -> Result<(), Duration> {
+    pub async fn check_and_update(&self, user_id: u64, cooldown: Duration) -> Result<(), Duration> {
         let mut map = self.user_cooldowns.lock().await;
         let now = Instant::now();
 
@@ -28,17 +26,5 @@ impl CooldownState {
 
         map.insert(user_id, now);
         Ok(())
-    }
-}
-
-struct Handler {
-    cooldown: Arc<CooldownState>,
-}
-
-impl Handler {
-    fn new() -> Self {
-        Self {
-            cooldown: Arc::new(CooldownState::new()),
-        }
     }
 }

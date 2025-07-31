@@ -1,15 +1,19 @@
 use std::{
-    collections::HashMap,
-    result,
-    sync::{Arc},
+    collections::HashMap, result, sync::Arc, time::Duration
 };
 
 use anyhow::Error;
+use once_cell::sync::Lazy;
 use serenity::{
-    all::{CommandInteraction, Context, CreateCommand},
+    all::{CommandInteraction, Context, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage},
     async_trait,
 };
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Mutex};
+
+use crate::command::system::cooldown_state::CooldownState;
+
+pub static COOLDOWN_MANAGER: Lazy<Mutex<CooldownState>> =
+    Lazy::new(|| Mutex::new(CooldownState::new()));
 
 #[derive(Clone)]
 pub struct CommandJob {
@@ -32,6 +36,7 @@ pub trait CommandHandler: Send + Sync + 'static + CommandInfo {
 
 pub trait CommandInfo: Send + Sync + 'static {
     fn name(&self) -> &'static str;
+    fn cooldown(&self) -> u64;
 }
 
 pub struct CommandRegistration {
@@ -86,8 +91,41 @@ pub async fn spawn_command_worker(mut rx: tokio::sync::mpsc::Receiver<CommandJob
             } = job;
 
             tokio::spawn(async move {
-                if let Err(err) = handler.execute(ctx, interaction).await {
-                    tracing::error!("Command execution failed: {:?}", err);
+
+                let interaction_clone = interaction.clone();
+                let ctx_clone = ctx.clone();
+
+                let cd_state = COOLDOWN_MANAGER.lock().await;
+
+                match cd_state.check_and_update(interaction.user.id.into(), Duration::from_secs(handler.clone().cooldown())).await {
+                    Ok(_) => {
+                        if let Err(err) = handler.execute(ctx, interaction).await {
+                            tracing::error!("Command execution failed: {:?}", err);
+        
+                            let _ = interaction_clone
+                                .create_response(
+                                    ctx_clone.http,
+                                    CreateInteractionResponse::Message(
+                                        CreateInteractionResponseMessage::new()
+                                            .content(format!("Error Command Execution: {:?}",err))
+                                            .ephemeral(true),
+                                    ),
+                                )
+                                .await;
+                        }
+                    }
+                    Err(e) => {
+                        let _ = interaction_clone
+                                .create_response(
+                                    ctx_clone.http,
+                                    CreateInteractionResponse::Message(
+                                        CreateInteractionResponseMessage::new()
+                                            .content(format!("You're using command too fast! remaining: {:?}",e))
+                                            .ephemeral(true),
+                                    ),
+                                )
+                                .await;
+                    }
                 }
             });
         }

@@ -61,20 +61,49 @@ pub fn event(attr: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-/// Parse `cmd = test`
+/// Parse `cmd = test, cooldown`
 struct CommandAttrArgs {
     cmd_ident: Ident,
+    cooldown: syn::LitInt,
 }
 
 impl Parse for CommandAttrArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let key: Ident = input.parse()?;         // should be `cmd`
-        input.parse::<Token![=]>()?;
-        if key != "cmd" {
-            return Err(syn::Error::new(key.span(), "expected `cmd = ...`"));
+        let mut cmd_ident = None;
+        let mut cooldown = None;
+
+        while !input.is_empty() {
+            let key: Ident = input.parse()?;
+            input.parse::<Token![=]>()?;
+
+            match key.to_string().as_str() {
+                "cmd" => {
+                    if cmd_ident.is_some() {
+                        return Err(syn::Error::new(key.span(), "duplicate `cmd`"));
+                    }
+                    cmd_ident = Some(input.parse()?);
+                }
+                "cooldown" => {
+                    if cooldown.is_some() {
+                        return Err(syn::Error::new(key.span(), "duplicate `cooldown`"));
+                    }
+                    cooldown = Some(input.parse()?);
+                }
+                _ => {
+                    return Err(syn::Error::new(key.span(), "unexpected key, expected `cmd` or `cooldown`"));
+                }
+            }
+
+            // Try to parse a comma if there's more input
+            if input.peek(Token![,]) {
+                input.parse::<Token![,]>()?;
+            }
         }
-        let value: Ident = input.parse()?;       // actual command name
-        Ok(CommandAttrArgs { cmd_ident: value })
+
+        Ok(CommandAttrArgs {
+            cmd_ident: cmd_ident.ok_or_else(|| syn::Error::new(input.span(), "`cmd` is required"))?,
+            cooldown: cooldown.ok_or_else(|| syn::Error::new(input.span(), "`cooldown` is required"))?,
+        })
     }
 }
 
@@ -85,17 +114,23 @@ pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemStruct);
 
     let cmd_name = args.cmd_ident.to_string();
+    let cooldown_value = args.cooldown.base10_parse::<u64>().unwrap_or(0); // แปลงเป็น u64
+
     let struct_name = &input.ident;
 
     let expanded = quote! {
         #input
-    
+
         impl crate::command::system::manager::CommandInfo for #struct_name {
             fn name(&self) -> &'static str {
                 #cmd_name
             }
+
+            fn cooldown(&self) -> u64 {
+                #cooldown_value
+            }
         }
-    
+
         inventory::submit! {
             crate::command::system::manager::CommandRegistration {
                 constructor: || std::sync::Arc::new(#struct_name),

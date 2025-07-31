@@ -8,7 +8,7 @@ use serenity::{
 
 use crate::command::system::manager::{CommandHandler, CommandInfo};
 
-#[command(cmd = modal)]
+#[command(cmd = modal,cooldown = 0)]
 pub struct ModalCommand;
 
 #[async_trait]

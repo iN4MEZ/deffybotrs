@@ -9,7 +9,7 @@ use serenity::{
 
 use crate::command::system::manager::{CommandHandler, CommandInfo};
 
-#[command(cmd = profile)]
+#[command(cmd = profile, cooldown = 0)]
 pub struct ProfileCommand;
 
 #[async_trait]

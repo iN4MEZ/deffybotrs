@@ -4,7 +4,7 @@ use serenity::{all::{CommandInteraction, Context, CreateCommand}, async_trait};
 
 use crate::command::system::manager::CommandHandler;
 
-#[command(cmd = dl)]
+#[command(cmd = dl, cooldown = 0)]
 pub struct DownloadCommand;
 
 #[async_trait]

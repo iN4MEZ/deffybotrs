@@ -10,7 +10,7 @@ use serenity::{
 
 use crate::command::system::manager::{CommandHandler, CommandInfo};
 
-#[command(cmd = key)]
+#[command(cmd = key, cooldown = 0)]
 pub struct KeyCommand;
 
 #[async_trait]

@@ -2,7 +2,7 @@ use anyhow::Error;
 use deffy_bot_macro::command;
 use serenity::{
     all::{
-        CommandInteraction, Context, CreateCommand, CreateCommandOption,
+        CommandInteraction, Context, CreateCommand,
         CreateInteractionResponse, CreateInteractionResponseMessage,
     },
     async_trait,
@@ -10,7 +10,7 @@ use serenity::{
 
 use crate::command::system::manager::{CommandHandler, CommandInfo};
 
-#[command(cmd = test)]
+#[command(cmd = test, cooldown = 10)]
 pub struct TestCommand;
 
 #[async_trait]
@@ -33,13 +33,5 @@ impl CommandHandler for TestCommand {
     fn register(&self) -> CreateCommand {
         CreateCommand::new(self.name())
             .description("A test command")
-            .add_option(
-                CreateCommandOption::new(
-                    serenity::all::CommandOptionType::String,
-                    "input",
-                    "An input string for testing",
-                )
-                .required(true),
-            )
     }
 }
