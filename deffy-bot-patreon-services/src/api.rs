@@ -401,6 +401,7 @@ enum_str!(PatronStatus {
     ActivePatron("active_patron"),
     DeclinedPatron("declined_patron"),
     FormerPatron("former_patron"),
+    Null("null"),
 });
 
 pub type Pledge = ApiDocument<PledgeAttributes>;

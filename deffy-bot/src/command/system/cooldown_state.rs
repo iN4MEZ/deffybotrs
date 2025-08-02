@@ -1,15 +1,15 @@
 
-use std::{collections::HashMap, time::{Duration, Instant}};
+use std::{collections::HashMap, sync::Arc, time::{Duration, Instant}};
 use tokio::sync::Mutex;
 
 pub struct CooldownState {
-    user_cooldowns: Mutex<HashMap<u64, Instant>>,
+    user_cooldowns: Arc<Mutex<HashMap<u64, Instant>>>
 }
 
 impl CooldownState {
     pub fn new() -> Self {
         Self {
-            user_cooldowns: Mutex::new(HashMap::new()),
+            user_cooldowns: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -25,6 +25,15 @@ impl CooldownState {
         }
 
         map.insert(user_id, now);
+
+         // Schedule cleanup after cooldown expires
+        let user_cooldowns = self.user_cooldowns.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(cooldown).await;
+            let mut map = user_cooldowns.lock().await;
+            map.remove(&user_id);
+        });
+
         Ok(())
     }
 }

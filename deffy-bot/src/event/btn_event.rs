@@ -1,9 +1,10 @@
+use std::time::Duration;
 
 use deffy_bot_macro::event;
-use serenity::{all::{Context, CreateInteractionResponse, CreateInteractionResponseMessage, RoleId}};
+use deffy_bot_utils::ModalBuilder;
+use serenity::all::{Context, CreateInteractionResponse, CreateInteractionResponseMessage};
 
-use crate::event::manager::EventData;
-
+use crate::{command::system::manager::COOLDOWN_MANAGER, event::manager::EventData};
 
 #[event(e = interaction_create)]
 async fn on_message(ctx: Context, data: EventData) {
@@ -11,43 +12,67 @@ async fn on_message(ctx: Context, data: EventData) {
         if let Some(btn) = &interaction.as_message_component() {
             match btn.data.custom_id.as_str() {
                 "btn1" => {
-                    let client_has_role = btn.user.has_role(&ctx.http, btn.guild_id.unwrap(), RoleId::new(1400089824471548035)).await;
 
-                    let mut  content = format!("You don't have Role!");
 
-                    match client_has_role {
+                    let cd_state = COOLDOWN_MANAGER.lock().await;
 
-                        Ok(client) => {
-                            if client {
-                                content = format!("You have Role!");
+                    match cd_state
+                        .check_and_update(btn.user.id.into(), Duration::from_secs(30))
+                        .await
+                    {
+                        Ok(_) => {
+                            let modal = ModalBuilder::new("verify_patreon", "Verify your email")
+                                .add_text_input(
+                                    "email",
+                                    "Email",
+                                    serenity::all::InputTextStyle::Paragraph,
+                                )
+                                .build();
+
+                            let response = btn.create_response(&ctx.http, modal).await;
+
+                            if let Err(e) = response {
+                                tracing::error!("{}", e)
                             }
                         }
                         Err(e) => {
-                            tracing::error!("{e}");
+                            let _response = btn
+                                .create_response(
+                                    &ctx.http,
+                                    CreateInteractionResponse::Message(
+                                        CreateInteractionResponseMessage::new()
+                                            .content(format!("too fast! {:?}",e)).ephemeral(true),
+                                    ),
+                                )
+                                .await;
                         }
-                        
                     }
 
-                    let response = btn.create_response(
-                        &ctx.http, 
-                        CreateInteractionResponse::Message(
-                            CreateInteractionResponseMessage::new()
-                                .content(content)
-                                .ephemeral(true)
-                        )
-                    ).await;
+                    // let client_has_role = btn.user.has_role(&ctx.http, btn.guild_id.unwrap(), RoleId::new(1400089824471548035)).await;
 
-                    if let Err(e) = response {
-                        tracing::error!("{}",e)
-                    }
+                    // let  content = format!("You don't have Role!");
 
+                    // match client_has_role {
+
+                    //     Ok(client) => {
+                    //         if client {
+                    //             content = format!("You have Role!");
+                    //         }
+                    //     }
+                    //     Err(e) => {
+                    //         tracing::error!("{e}");
+                    //     }
+
+                    // }
+
+                    //let response = btn.create_response(&ctx.http, format!("Error")).await;
+
+                    // if let Err(e) = response {
+                    //     tracing::error!("{}",e)
+                    // }
                 }
-                _ => {
-
-                }
-                
+                _ => {}
             }
-            
         }
     }
 }

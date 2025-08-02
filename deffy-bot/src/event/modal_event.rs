@@ -1,6 +1,6 @@
 
 use deffy_bot_macro::event;
-use deffy_bot_utils::ModalBuilder;
+use deffy_bot_utils::{ModalBuilder, PatreonVerification};
 use serenity::all::{Context, CreateInteractionResponse, CreateInteractionResponseMessage};
 
 use crate::event::manager::EventData;
@@ -10,13 +10,24 @@ async fn on_message(ctx: Context, data: EventData) {
     if let EventData::Interaction(interaction) = data {
         if let Some(modal) = &interaction.modal_submit() {
             match modal.data.custom_id.as_str() {
-                "myModal" => {
+                "verify_patreon" => {
                     // Collect all input text values from the modal
                     let input_values = ModalBuilder::extract_modal_inputs(modal);
 
                     tracing::debug!("{:?}", input_values);
+
+                    let patreon_email = input_values.iter().find(|(key, _)| key == "email").map(|(_, value)| value.clone()).unwrap_or_default();
+
+                    let patreon_verification = PatreonVerification::new(patreon_email.clone());
+
+                    let is_verified = patreon_verification.verify().await.unwrap_or(false);
+
+                    if is_verified {
+                        
+                    }
+
                     let content = format!(
-                        "You Have Enter Something"
+                        "Verified: {}", is_verified
                     );
         
                      let response = CreateInteractionResponse::Message(

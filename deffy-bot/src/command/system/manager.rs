@@ -5,12 +5,12 @@ use std::{
 use anyhow::Error;
 use once_cell::sync::Lazy;
 use serenity::{
-    all::{CommandInteraction, Context, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage},
+    all::{CommandInteraction, Context, CreateCommand},
     async_trait,
 };
 use tokio::sync::{mpsc, Mutex};
 
-use crate::command::system::cooldown_state::CooldownState;
+use crate::command::system::{cooldown_state::CooldownState, interaction_reply::InteractionExt};
 
 pub static COOLDOWN_MANAGER: Lazy<Mutex<CooldownState>> =
     Lazy::new(|| Mutex::new(CooldownState::new()));
@@ -102,29 +102,19 @@ pub async fn spawn_command_worker(mut rx: tokio::sync::mpsc::Receiver<CommandJob
                         if let Err(err) = handler.execute(ctx, interaction).await {
                             tracing::error!("Command execution failed: {:?}", err);
         
-                            let _ = interaction_clone
-                                .create_response(
-                                    ctx_clone.http,
-                                    CreateInteractionResponse::Message(
-                                        CreateInteractionResponseMessage::new()
-                                            .content(format!("Error Command Execution: {:?}",err))
-                                            .ephemeral(true),
-                                    ),
-                                )
-                                .await;
+                            let result = interaction_clone.reply(&ctx_clone, format!("Error Command Execution: {:?}",err), true).await;
+
+                            if let Err(e) = result {
+                                tracing::error!("Failed to send reply: {:?}", e);
+                            }
                         }
                     }
                     Err(e) => {
-                        let _ = interaction_clone
-                                .create_response(
-                                    ctx_clone.http,
-                                    CreateInteractionResponse::Message(
-                                        CreateInteractionResponseMessage::new()
-                                            .content(format!("You're using command too fast! remaining: {:?}",e))
-                                            .ephemeral(true),
-                                    ),
-                                )
-                                .await;
+                        let result = interaction_clone.reply(&ctx_clone, format!("You're using command too fast! remaining: {:?}",e), true).await;
+
+                        if let Err(e) = result {
+                            tracing::error!("Failed to send reply: {:?}", e);
+                        }
                     }
                 }
             });

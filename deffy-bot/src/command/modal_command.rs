@@ -2,7 +2,7 @@ use anyhow::Error;
 use deffy_bot_macro::command;
 use deffy_bot_utils::ModalBuilder;
 use serenity::{
-    all::{CommandInteraction, Context, CreateCommand},
+    all::{CommandInteraction, Context, CreateCommand, Permissions},
     async_trait,
 };
 
@@ -29,7 +29,7 @@ impl CommandHandler for ModalCommand {
     }
 
     fn register(&self) -> CreateCommand {
-        CreateCommand::new(self.name()).description("test modal")
+        CreateCommand::new(self.name()).description("test modal").default_member_permissions(Permissions::ADMINISTRATOR)
     }
 }
 

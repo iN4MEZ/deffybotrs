@@ -1,7 +1,7 @@
 use deffy_bot_macro::event;
-use serenity::all::{Context, CreateInteractionResponse, CreateInteractionResponseMessage};
+use serenity::all::Context;
 
-use crate::{command::system::manager::CommandJob, event::{manager::EventData, start_event::COMMAND_MANAGER}};
+use crate::{command::system::{interaction_reply::InteractionExt, manager::CommandJob}, event::{manager::EventData, start_event::COMMAND_MANAGER}};
 
 #[event(e = interaction_create)]
 pub async fn on_message(ctx: Context, data: EventData) {
@@ -38,17 +38,14 @@ pub async fn on_message(ctx: Context, data: EventData) {
                 _ => {
                     tracing::warn!("No handler found or command system uninitialized for command: {}", command.data.name);
 
-                    // หากต้องการแจ้ง user ว่า command ใช้งานไม่ได้
-                    let _ = command
-                        .create_response(
-                            ctx.http,
-                            CreateInteractionResponse::Message(
-                                CreateInteractionResponseMessage::new()
-                                    .content("This command is currently unavailable.")
-                                    .ephemeral(true),
-                            ),
-                        )
-                        .await;
+                    let content = format!("This command is currently unavailable.");
+
+                    let result = command.reply(&ctx, content, true).await;
+
+                    if let Err(e) = result {
+                        tracing::error!("Failed to send reply: {:?}", e);
+                    }
+                   
                 }
             }
         }

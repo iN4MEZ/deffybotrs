@@ -1,5 +1,6 @@
 use std::{env, net::{SocketAddr}, time::Instant};
 use axum::{body::Body, extract::ConnectInfo, http::Request, middleware::Next, response::Response, routing::get, Router};
+use deffy_bot_utils::PatreonDatabaseManager;
 use dotenv::dotenv;
 
 mod event;
@@ -29,6 +30,19 @@ async fn main() {
     let (tx, rx) = mpsc::channel(100);
 
     spawn_event_dispatcher(rx).await;
+
+    let db = PatreonDatabaseManager::init_db().await;
+
+    match db {
+        Ok(db) => {
+            if let Err(e) = db.collect().await{
+                tracing::error!("{:?}",e)
+            }
+        }
+        Err(err) => {
+            tracing::error!("Error connect with database {}",err)
+        }
+    }
 
 
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment").to_string();

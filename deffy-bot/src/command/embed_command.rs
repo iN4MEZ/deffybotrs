@@ -5,7 +5,7 @@ use deffy_bot_macro::command;
 use serde::Deserialize;
 use serenity::{
     all::{
-        ButtonStyle, CommandDataOption, CommandInteraction, Context, CreateActionRow, CreateButton, CreateCommand, CreateCommandOption, CreateEmbed, CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage, EditMessage
+        ButtonStyle, CommandDataOption, CommandInteraction, Context, CreateActionRow, CreateButton, CreateCommand, CreateCommandOption, CreateEmbed, CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage, EditMessage, Permissions
     },
     async_trait,
 };
@@ -139,6 +139,7 @@ impl CommandHandler for EmbedCommand {
                 "messageid",
                 "A MessageId for edit embed",
             ))
+            .default_member_permissions(Permissions::ADMINISTRATOR)
     }
 }
 

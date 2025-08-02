@@ -6,7 +6,7 @@ use deffy_bot_patreon_services::PatreonApi;
 use serenity::{
     all::{
         CommandInteraction, Context, CreateCommand, CreateInteractionResponse,
-        CreateInteractionResponseMessage, CreateMessage,
+        CreateInteractionResponseMessage, CreateMessage, Permissions,
     },
     async_trait,
 };
@@ -52,6 +52,6 @@ impl CommandHandler for ClaimCommand {
     }
 
     fn register(&self) -> CreateCommand {
-        CreateCommand::new("claim").description("Claim a your key")
+        CreateCommand::new("claim").description("Claim a your key").default_member_permissions(Permissions::ADMINISTRATOR)
     }
 }
