@@ -1,6 +1,6 @@
 use std::{env, net::{SocketAddr}, time::Instant};
 use axum::{body::Body, extract::ConnectInfo, http::Request, middleware::Next, response::Response, routing::get, Router};
-use deffy_bot_utils::PatreonDatabaseManager;
+use deffy_bot_utils::DatabaseManager;
 use dotenv::dotenv;
 
 mod event;
@@ -31,7 +31,7 @@ async fn main() {
 
     spawn_event_dispatcher(rx).await;
 
-    let db = PatreonDatabaseManager::init_db().await;
+    let db = DatabaseManager::init_db().await;
 
     match db {
         Ok(db) => {

@@ -72,10 +72,10 @@ pub enum ScheduleMessage {
     Error(String),
 }
 
-pub struct PatreonDatabaseManager {
+pub struct DatabaseManager {
 }
 
-impl PatreonDatabaseManager {
+impl DatabaseManager {
     pub async fn init_db() -> Result<Self, Error> {
         let mongo_uri = env::var("MONGO_URI").expect("MONGO_URI must be set");
 
@@ -147,7 +147,7 @@ impl PatreonDatabaseManager {
                             .collect();
     
                         let _ = tx.send(ScheduleMessage::Info(format!(
-                            "Write {} items",
+                            "Updated {} items",
                             api_vec.len()
                         )));
     
@@ -182,7 +182,7 @@ impl PatreonVerification {
 
     pub async fn verify(&self) -> Result<bool, Error> {
 
-        let db = PatreonDatabaseManager::get_db();
+        let db = DatabaseManager::get_db();
 
         let collection: Collection<PatreonUserData> = db.collection("user_data");
 
@@ -191,4 +191,55 @@ impl PatreonVerification {
         Ok(verify.is_some())
     
     }
+}
+
+#[derive(Serialize, Deserialize,Debug)]
+pub struct DiscordServerData {
+    verify_role_id: u64,
+}
+
+pub struct DiscordServerDatabaseManager {
+}
+
+impl DiscordServerDatabaseManager {
+
+    pub async fn get_verify_roles() -> Option<u64> {
+        let db = DatabaseManager::get_db();
+
+        let collection: Collection<DiscordServerData> = db.collection("server_data");
+
+        let data = collection.find_one(doc! {}).await;
+
+        match data {
+            Ok(data) => {
+                if let Some(data) = data {
+                    return Some(data.verify_role_id);
+                }
+            }
+            Err(_) => {
+                tracing::error!("Verify role not found")
+            
+        }
+    }
+        None
+    }
+
+    pub async fn set_verify_roles(sv_id: u64,id: u64) -> Result<(), Error> {
+
+        let db = DatabaseManager::get_db();
+        let collection: Collection<DiscordServerData> = db.collection("server_data");
+
+        let filter = doc! { "server_id": sv_id as i64 };
+        let update = doc! {
+            "$set": {
+                "verify_role_id": id as i64,
+            }
+        };
+
+        if let Err(e) = collection.update_one(filter, update).upsert(true).await {
+            return Err(e.into());
+        }
+        Ok(())
+    }
+    
 }

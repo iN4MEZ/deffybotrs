@@ -16,6 +16,6 @@ tracing-subscriber = { version = "0.3.19" , features = ["env-filter"] }
 rbase64 = "2.0.3"
 deffy-bot-patreon-services = { path = "deffy-bot-patreon-services"}
 anyhow = "1.0.98"
-mongodb = { version = "3.2.4"  }
+mongodb = { version = "3.2.4"   }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.142" }

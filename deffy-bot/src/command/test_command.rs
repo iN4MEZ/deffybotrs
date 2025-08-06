@@ -2,7 +2,7 @@ use anyhow::Error;
 use deffy_bot_macro::command;
 use serenity::{
     all::{
-        CommandInteraction, Context, CreateCommand,
+        CommandInteraction, Context, CreateCommand, Permissions,
     },
     async_trait,
 };
@@ -15,6 +15,7 @@ pub struct TestCommand;
 #[async_trait]
 impl CommandHandler for TestCommand {
     async fn execute(&self, ctx: Context, interaction: CommandInteraction) -> Result<(), Error> {
+
         let content = format!(
             "Hello, {} This is a test command response.",
             interaction.user.name
@@ -28,5 +29,6 @@ impl CommandHandler for TestCommand {
     fn register(&self) -> CreateCommand {
         CreateCommand::new(self.name())
             .description("A test command")
+            .default_member_permissions(Permissions::ADMINISTRATOR)
     }
 }
