@@ -2,7 +2,7 @@ use std::{env, sync::Arc, time::Duration};
 
 use anyhow::{Error};
 use deffy_bot_patreon_services::PatreonApi;
-use mongodb::{bson::doc, Client, Collection, Database};
+use mongodb::{bson::{doc, to_bson}, Client, Collection, Database};
 use serde::{Deserialize, Serialize};
 use serenity::all::{
     ActionRowComponent, CreateActionRow, CreateInputText, CreateInteractionResponse, CreateModal,
@@ -169,6 +169,30 @@ impl DatabaseManager {
         });
         Ok(())
     }
+
+    pub async fn update_discord_server_data<T>(sv_id: u64,key: &str,value: T) -> Result<(), Error> where T: Serialize, {
+
+        let db = DatabaseManager::get_db();
+        let collection: Collection<DiscordServerData> = db.collection("server_data");
+
+        let filter = doc! { "server_id": sv_id as i64 };
+
+        let bson_value = to_bson(&value).map_err(|e| {
+            Error::from(e)
+        })?;
+
+        let update = doc! {
+            "$set": {
+                key: bson_value,
+            }
+        };
+
+        if let Err(e) = collection.update_one(filter, update).upsert(true).await {
+            return Err(e.into());
+        }
+        Ok(())
+
+    }
 }
 
 pub struct PatreonVerification {
@@ -226,20 +250,15 @@ impl DiscordServerDatabaseManager {
 
     pub async fn set_verify_roles(sv_id: u64,id: u64) -> Result<(), Error> {
 
-        let db = DatabaseManager::get_db();
-        let collection: Collection<DiscordServerData> = db.collection("server_data");
-
-        let filter = doc! { "server_id": sv_id as i64 };
-        let update = doc! {
-            "$set": {
-                "verify_role_id": id as i64,
-            }
-        };
-
-        if let Err(e) = collection.update_one(filter, update).upsert(true).await {
-            return Err(e.into());
-        }
+        DatabaseManager::update_discord_server_data(sv_id,"verify_role_id",id).await?;
         Ok(())
+    }
+
+    pub async fn set_logging_channel(sv_id: u64,channel_id: u64) -> Result<(),Error> {
+
+        DatabaseManager::update_discord_server_data(sv_id, "log_channel_id", channel_id).await?;
+        Ok(())
+
     }
     
 }
