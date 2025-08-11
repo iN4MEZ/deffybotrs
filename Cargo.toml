@@ -8,7 +8,7 @@ members = [
 resolver = "3"
 
 [workspace.dependencies]
-serenity = { git = "https://github.com/serenity-rs/serenity", branch = "current"}
+serenity = { git = "https://github.com/serenity-rs/serenity", branch = "current", features = ["full"] }
 tokio = { version = "1.47.1", features = ["full"] }
 dotenv = "0.15.0"
 tracing = "0.1.41"
@@ -19,3 +19,4 @@ anyhow = "1.0.98"
 mongodb = { version = "3.2.4"   }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.142" }
+chrono = { version = "0.4.41" }

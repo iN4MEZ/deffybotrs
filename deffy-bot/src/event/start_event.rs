@@ -32,7 +32,7 @@ async fn on_ready(ctx: Context, _data: EventData) -> Result<(),Error> {
      // ใส่ลง Arc<Mutex> เพื่อให้ทั่วระบบ access ได้
      let manager_arc = Arc::new(Mutex::new(manager));
      if let Err(_) = COMMAND_MANAGER.set(manager_arc.clone()) {
-        tracing::error!("Failed to set command manager");
+        tracing::error!("Failed to set command manager");   
      }
 
     let commands = guild_id.set_commands(ctx.http, commands).await;

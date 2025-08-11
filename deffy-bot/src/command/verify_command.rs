@@ -1,6 +1,6 @@
 use anyhow::Error;
 use deffy_bot_macro::command;
-use deffy_bot_utils::ModalBuilder;
+use deffy_bot_utils::builder_utils::ModalBuilder;
 use serenity::{
     all::{
         CommandInteraction, Context, CreateCommand,

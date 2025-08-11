@@ -1,5 +1,5 @@
 use deffy_bot_macro::event;
-use deffy_bot_utils::{DiscordServerDatabaseManager, ModalBuilder, PatreonVerification};
+use deffy_bot_utils::{builder_utils::ModalBuilder, database::{DiscordServerDatabaseManager, PatreonVerification}};
 use serenity::all::{Context, CreateInteractionResponse, CreateInteractionResponseMessage, RoleId};
 
 use crate::event::manager::EventData;

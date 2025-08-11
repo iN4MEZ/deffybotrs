@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use deffy_bot_macro::event;
-use deffy_bot_utils::ModalBuilder;
+use deffy_bot_utils::builder_utils::ModalBuilder;
 use serenity::all::{Context, CreateInteractionResponse, CreateInteractionResponseMessage};
 
 use crate::{command::system::manager::COOLDOWN_MANAGER, event::manager::EventData};

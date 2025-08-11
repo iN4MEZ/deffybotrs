@@ -1,6 +1,6 @@
 use anyhow::Error;
 use deffy_bot_macro::command;
-use deffy_bot_utils::DiscordServerDatabaseManager;
+use deffy_bot_utils::database::DiscordServerDatabaseManager;
 use serenity::{
     all::{
         CommandDataOptionValue, CommandInteraction, CommandOptionType, Context, CreateCommand,

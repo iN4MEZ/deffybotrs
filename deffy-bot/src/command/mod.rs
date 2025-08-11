@@ -8,3 +8,4 @@ pub mod embed_command;
 pub mod modal_command;
 pub mod verify_command;
 pub mod setup_command;
+pub mod moderate_command;
