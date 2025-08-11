@@ -1,6 +1,5 @@
 use std::{
     collections::HashSet,
-    sync::Arc,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
@@ -199,7 +198,7 @@ async fn send_ban_menu(ctx: &Context, interaction: &CommandInteraction) -> Resul
                         &ctx.http,
                         CreateInteractionResponse::Message(
                             CreateInteractionResponseMessage::new()
-                                .content("คุณไม่สามารถใช้เมนูนี้ได้")
+                                .content("You are not the owner of this command!")
                                 .ephemeral(true),
                         ),
                     )

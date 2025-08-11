@@ -28,5 +28,6 @@ impl CommandHandler for VerifyCommand {
     fn register(&self) -> CreateCommand {
         CreateCommand::new(self.name())
             .description("Verify your email")
+            .default_member_permissions(serenity::all::Permissions::ADMINISTRATOR)
     }
 }

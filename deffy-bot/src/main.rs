@@ -1,6 +1,6 @@
 use std::{env, net::{SocketAddr}, time::Instant};
 use axum::{body::Body, extract::ConnectInfo, http::Request, middleware::Next, response::Response, routing::get, Router};
-use deffy_bot_utils::DatabaseManager;
+use deffy_bot_utils::database::DatabaseManager;
 use dotenv::dotenv;
 
 mod event;
