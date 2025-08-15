@@ -11,7 +11,7 @@ async fn on_message(ctx: Context, data: EventData) {
     if let EventData::Interaction(interaction) = data {
         if let Some(btn) = &interaction.as_message_component() {
             match btn.data.custom_id.as_str() {
-                "btn1" => {
+                "btn:verify:patreon" => {
                     let cd_state = COOLDOWN_MANAGER.lock().await;
 
                     match cd_state
