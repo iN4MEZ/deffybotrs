@@ -1,6 +1,7 @@
 use crate::api::*;
 use crate::error::*;
 
+#[derive(Debug)]
 pub enum Event {
     CreatePledge(Pledge),
     UpdatePledge(Pledge),
@@ -21,13 +22,27 @@ pub struct Webhook {
 impl Webhook {
     pub fn check_signature(&self, body: &[u8], signature: &str) -> PatreonResult<bool> {
         use hmac::{Hmac, Mac};
-        use md5::Md5;
-        type HmacMd5 = Hmac<Md5>;
-        let mut mac = HmacMd5::new_from_slice(self.webhook_secret.as_bytes())
-            .map_err(|_| PatreonError::Message("Invalid hmac key length".to_string()))?;
-        mac.update(body);
-        let local = hex::encode(mac.finalize().into_bytes().as_slice());
-        Ok(local.eq(signature))
+    use md5::Md5;
+    type HmacMd5 = Hmac<Md5>;
+
+    // Log inputs for debugging
+    eprintln!("Webhook secret: {:?}", self.webhook_secret);
+    eprintln!("Body (hex): {}", hex::encode(body));
+    eprintln!("Received signature: {}", signature);
+
+    let mut mac = HmacMd5::new_from_slice(self.webhook_secret.as_bytes())
+        .map_err(|_| PatreonError::Message("Invalid hmac key length".to_string()))?;
+    mac.update(body);
+    let local = hex::encode(mac.finalize().into_bytes().as_slice());
+
+    // Log computed signature
+    eprintln!("Computed signature: {}", local);
+
+    // Perform case-insensitive comparison for debugging
+    let is_valid = local.to_lowercase() == signature.to_lowercase();
+    eprintln!("Signature match: {}", is_valid);
+
+    Ok(local.eq(signature)) // Keep original case-sensitive comparison for production
     }
 
     pub fn parse_event(&self, body: &[u8], trigger: &str) -> PatreonResult<Event> {

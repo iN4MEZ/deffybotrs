@@ -43,4 +43,5 @@ async fn on_ready(ctx: Context, _data: EventData) -> Result<(),Error> {
     }
 
     tracing::info!("Logged in as {}", ctx.cache.current_user().name);
+    Ok(())
 }

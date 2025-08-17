@@ -5,7 +5,6 @@ edition = "2024"
 authors = ["IN4MEZ"]
 
 [dependencies]
-axum = { version = "0.8.4", features = ["tokio","http1","macros"] }
 serenity = {workspace = true}
 tokio = {  workspace = true }
 dotenv = { workspace = true }
@@ -19,6 +18,7 @@ rbase64 = { workspace = true }
 deffy-bot-encryption = {path = "../deffy-bot-encryption"}
 deffy-bot-patreon-services = {workspace = true}
 deffy-bot-utils = { path = "../deffy-bot-utils"}
+deffy-bot-http = { path = "../deffy-bot-http" }
 anyhow = {workspace = true}
 serde = {workspace = true}
 serde_json ={ workspace = true }

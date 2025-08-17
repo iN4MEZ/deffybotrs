@@ -3,8 +3,8 @@ extern crate proc_macro;
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Ident, ItemFn, ItemStruct, Token};
 use syn::parse::{Parse, ParseStream};
+use syn::{Ident, ItemFn, ItemStruct, Token, parse_macro_input};
 
 struct EventFnArgs {
     e_expr: Ident,
@@ -31,32 +31,35 @@ pub fn event(attr: TokenStream, item: TokenStream) -> TokenStream {
     let fn_body = &func.block;
     let fn_vis = &func.vis;
 
-    let registry_struct = quote::format_ident!("EVENT_HOOK{}_",fn_name.to_string().to_case(Case::UpperCamel));
+    let registry_struct = quote::format_ident!(
+        "EVENT_HOOK{}_",
+        fn_name.to_string().to_case(Case::UpperCamel)
+    );
 
     let expanded = quote! {
-        #fn_vis async fn #fn_name(#fn_args) #fn_body
+    #fn_vis async fn #fn_name(#fn_args) -> Result<(), anyhow::Error> #fn_body
 
-        struct #registry_struct;
+    struct #registry_struct;
 
-        #[serenity::async_trait]
-        impl crate::event::manager::Hookable for #registry_struct {
-            async fn call(&self, event: &str, ctx: serenity::prelude::Context, data: crate::event::manager::EventData) {
-                if event == stringify!(#e_expr) {
-
-                    #fn_name(ctx, data).await;
-
-                }
+    #[serenity::async_trait]
+    impl crate::event::manager::Hookable for #registry_struct {
+        async fn call(
+            &self, 
+            event: &str, 
+            ctx: serenity::prelude::Context, 
+            data: crate::event::manager::EventData
+        ) -> Result<(), anyhow::Error> {
+            if event == stringify!(#e_expr) {
+                #fn_name(ctx, data).await?;
             }
-
-            // fn event_type(&self) -> &'static str {
-            //     stringify!(#e_expr)
-            // }
+            Ok(())
         }
+    }
 
-        inventory::submit! {
-            &#registry_struct as &dyn crate::event::manager::Hookable
-        }
-    };
+    inventory::submit! {
+        &#registry_struct as &dyn crate::event::manager::Hookable
+    }
+};
 
     TokenStream::from(expanded)
 }
@@ -90,7 +93,10 @@ impl Parse for CommandAttrArgs {
                     cooldown = Some(input.parse()?);
                 }
                 _ => {
-                    return Err(syn::Error::new(key.span(), "unexpected key, expected `cmd` or `cooldown`"));
+                    return Err(syn::Error::new(
+                        key.span(),
+                        "unexpected key, expected `cmd` or `cooldown`",
+                    ));
                 }
             }
 
@@ -101,12 +107,13 @@ impl Parse for CommandAttrArgs {
         }
 
         Ok(CommandAttrArgs {
-            cmd_ident: cmd_ident.ok_or_else(|| syn::Error::new(input.span(), "`cmd` is required"))?,
-            cooldown: cooldown.ok_or_else(|| syn::Error::new(input.span(), "`cooldown` is required"))?,
+            cmd_ident: cmd_ident
+                .ok_or_else(|| syn::Error::new(input.span(), "`cmd` is required"))?,
+            cooldown: cooldown
+                .ok_or_else(|| syn::Error::new(input.span(), "`cooldown` is required"))?,
         })
     }
 }
-
 
 #[proc_macro_attribute]
 pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {

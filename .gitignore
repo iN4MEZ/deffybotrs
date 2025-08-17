@@ -1,2 +1,5 @@
 /target
 .env
+test.html
+deffy-bot-http/src/certificates/key.pem
+deffy-bot-http/src/certificates/cert.pem

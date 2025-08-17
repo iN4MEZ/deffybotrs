@@ -1,4 +1,3 @@
-
 use serenity::{all::Context, async_trait};
 use tokio::sync::mpsc;
 
@@ -9,10 +8,9 @@ pub enum EventData {
     Message(serenity::model::prelude::Message),
 }
 
-
 #[async_trait]
 pub trait Hookable: Sync + Send + 'static {
-    async fn call(&self, event: &str, ctx: Context, data: EventData);
+    async fn call(&self, event: &str, ctx: Context, data: EventData) -> Result<(), anyhow::Error>;
 }
 
 inventory::collect!(&'static dyn Hookable);
@@ -23,7 +21,9 @@ pub async fn spawn_event_dispatcher(
     tokio::spawn(async move {
         while let Some((event_name, ctx, data)) = rx.recv().await {
             for handler in inventory::iter::<&dyn Hookable> {
-                handler.call(&event_name, ctx.clone(), data.clone()).await;
+                if let Err(err) = handler.call(&event_name, ctx.clone(), data.clone()).await {
+                    tracing::error!("[Event Error] {}: {:?}", event_name, err);
+                }
             }
         }
     });
@@ -36,27 +36,20 @@ pub struct MasterHandler {
 #[serenity::async_trait]
 impl serenity::prelude::EventHandler for MasterHandler {
     async fn ready(&self, ctx: Context, data: serenity::model::prelude::Ready) {
-        let _ = self
-            .tx
-            .send(("ready".into(), ctx, EventData::Ready(data)))
-            .await;
+        if let Err(e) = self.tx.send(("ready".into(), ctx, EventData::Ready(data))).await {
+            tracing::error!("Send error: {}", e);
+        }
     }
 
     async fn interaction_create(&self, ctx: Context, data: serenity::model::prelude::Interaction) {
-        let _ = self
-            .tx
-            .send((
-                "interaction_create".into(),
-                ctx,
-                EventData::Interaction(data),
-            ))
-            .await;
+        if let Err(e) = self.tx.send(("interaction_create".into(), ctx, EventData::Interaction(data))).await {
+            tracing::error!("Send error: {}", e);
+        }
     }
 
     async fn message(&self, ctx: Context, data: serenity::model::prelude::Message) {
-        let _ = self
-            .tx
-            .send(("message".into(), ctx, EventData::Message(data)))
-            .await;
+        if let Err(e) = self.tx.send(("message".into(), ctx, EventData::Message(data))).await {
+            tracing::error!("Send error: {}", e);
+        }
     }
 }

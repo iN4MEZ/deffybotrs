@@ -30,9 +30,7 @@ pub async fn on_message(ctx: Context, data: EventData) {
                         handler,
                     };
 
-                    if let Err(e) = tx.send(job).await {
-                        tracing::error!("Failed to send job to queue: {:?}", e);
-                    }
+                    tx.send(job).await?;
                 }
 
                 _ => {
@@ -40,15 +38,12 @@ pub async fn on_message(ctx: Context, data: EventData) {
 
                     let content = format!("This command is currently unavailable.");
 
-                    let result = command.reply(&ctx, content, true).await;
-
-                    if let Err(e) = result {
-                        tracing::error!("Failed to send reply: {:?}", e);
-                    }
+                    command.reply(&ctx, content, true).await?;
                    
                 }
             }
         }
         
     }
+    Ok(())
 }

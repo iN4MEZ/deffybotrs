@@ -5,7 +5,7 @@ use serenity::all::{Context, CreateInteractionResponse, CreateInteractionRespons
 use crate::event::manager::EventData;
 
 #[event(e = interaction_create)]
-async fn on_message(ctx: Context, data: EventData) {
+async fn on_message(ctx: Context, data: EventData) -> Result<(), anyhow::Error> {
     if let EventData::Interaction(interaction) = data {
         if let Some(modal) = &interaction.modal_submit() {
             match modal.data.custom_id.as_str() {
@@ -60,12 +60,9 @@ async fn on_message(ctx: Context, data: EventData) {
                                         .content(content)
                                         .ephemeral(true),
                                 );
-
-                                if let Err(e) = modal.create_response(ctx.http, response).await {
-                                    tracing::error!("{}", e)
-                                }
-
-                                 return;
+                                modal
+                                    .create_response(&ctx.http, response)
+                                    .await?;
                             }
                         }
                     }
@@ -78,9 +75,7 @@ async fn on_message(ctx: Context, data: EventData) {
                             .ephemeral(true),
                     );
 
-                    if let Err(e) = modal.create_response(ctx.http, response).await {
-                        tracing::error!("{}", e)
-                    }
+                    modal.create_response(&ctx.http, response).await?;
                 }
                 _ => {
                     // Handle other custom_ids if needed
@@ -88,4 +83,5 @@ async fn on_message(ctx: Context, data: EventData) {
             }
         }
     }
+    Ok(())
 }
