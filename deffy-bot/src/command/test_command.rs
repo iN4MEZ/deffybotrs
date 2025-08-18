@@ -16,9 +16,11 @@ pub struct TestCommand;
 impl CommandHandler for TestCommand {
     async fn execute(&self, ctx: Context, interaction: CommandInteraction) -> Result<(), Error> {
 
+        let msg = deffy_bot_localization::tr!(&interaction.locale, "test");
+
         let content = format!(
-            "Hello, {} This is a test command response.",
-            interaction.user.name
+            "Test command executed successfully!\nLocale: {}\nMessage: {}",
+            interaction.locale, msg
         );
 
         interaction.reply(&ctx, content, true).await?;

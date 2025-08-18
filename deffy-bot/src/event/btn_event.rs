@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use deffy_bot_localization::tr;
 use deffy_bot_macro::event;
 use deffy_bot_utils::builder_utils::ModalBuilder;
 use serenity::all::{
@@ -24,8 +25,9 @@ async fn on_message(ctx: Context, data: EventData) -> Result<(), anyhow::Error> 
                     .build();
 
                 if let Err(e) = cooldown {
-                    let content =
-                        format!("You're using this button too fast! Please wait: {:?}", e);
+
+                    let content = format!("```{} {:?}```",tr!(&btn.locale,"button_cooldown_error"), e);
+                    
                     let response = CreateInteractionResponse::Message(
                         CreateInteractionResponseMessage::new()
                             .content(content)

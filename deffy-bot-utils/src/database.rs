@@ -44,7 +44,7 @@ impl DatabaseManager {
         DB.get().expect("DB not initialized").clone()
     }
 
-    pub async fn collect(&self) -> Result<(), Error> {
+    pub async fn start_collect(&self) -> Result<(), Error> {
 
         let db = Self::get_db();
 

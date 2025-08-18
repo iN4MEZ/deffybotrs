@@ -1,0 +1,6 @@
+{
+    "test": "test translation",
+    "command_execution_error": "Error Command Execution:",
+    "command_cooldown_error": "You're using command too fast! remaining.",
+    "button_cooldown_error": "You're using this button too fast! Please wait."
+}

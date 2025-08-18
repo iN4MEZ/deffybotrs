@@ -12,14 +12,15 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 deffy-bot-macro = { path = "../deffy-bot-macro" }
 inventory = "0.3.20"
-once_cell = "1.19"
-reqwest = { version = "0.12.22" }
 rbase64 = { workspace = true }
 deffy-bot-encryption = {path = "../deffy-bot-encryption"}
 deffy-bot-patreon-services = {workspace = true}
 deffy-bot-utils = { path = "../deffy-bot-utils"}
 deffy-bot-http = { path = "../deffy-bot-http" }
+deffy-bot-localization = { path = "../deffy-bot-localization" }
 anyhow = {workspace = true}
 serde = {workspace = true}
 serde_json ={ workspace = true }
 chrono ={ workspace = true }
+once_cell = {workspace = true}
+reqwest = {workspace = true}

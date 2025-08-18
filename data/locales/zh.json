@@ -1,0 +1,5 @@
+{
+    "command_execution_error": "命令执行错误：",
+    "command_cooldown_error": "你使用命令太快了！请等待冷却时间结束。",
+    "button_cooldown_error": "你点击按钮太快了！请稍等。"
+}

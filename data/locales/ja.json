@@ -1,0 +1,5 @@
+{
+    "command_execution_error": "コマンド実行エラー:",
+    "command_cooldown_error": "コマンドの使用が早すぎます！ クールダウンが残っています。",
+    "button_cooldown_error": "このボタンを押すのが早すぎます！ 少しお待ちください。"
+}

@@ -34,7 +34,7 @@ async fn main() {
 
         match db {
             Ok(db) => {
-                if let Err(e) = db.collect().await {
+                if let Err(e) = db.start_collect().await {
                     tracing::error!("{:?}", e)
                 }
             }

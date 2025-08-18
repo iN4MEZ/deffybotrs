@@ -3,6 +3,7 @@ use std::{
 };
 
 use anyhow::Error;
+use deffy_bot_localization::tr;
 use once_cell::sync::Lazy;
 use serenity::{
     all::{CommandInteraction, Context, CreateCommand},
@@ -101,8 +102,10 @@ pub async fn spawn_command_worker(mut rx: tokio::sync::mpsc::Receiver<CommandJob
                     Ok(_) => {
                         if let Err(err) = handler.execute(ctx, interaction).await {
                             tracing::error!("Command execution failed: {:?}", err);
+
+                            let content = format!("```{} {:?}```", tr!(&interaction_clone.locale, "command_execution_error"),err);
         
-                            let result = interaction_clone.reply(&ctx_clone, format!("```Error Command Execution: {:?}```",err), true).await;
+                            let result = interaction_clone.reply(&ctx_clone, content, true).await;
 
                             if let Err(e) = result {
                                 tracing::error!("Failed to send reply: {:?}", e);
@@ -110,7 +113,10 @@ pub async fn spawn_command_worker(mut rx: tokio::sync::mpsc::Receiver<CommandJob
                         }
                     }
                     Err(e) => {
-                        let result = interaction_clone.reply(&ctx_clone, format!("```You're using command too fast! remaining: {:?}```",e), true).await;
+
+                        let content = format!("```{} {:?}```",tr!(&interaction_clone.locale,"command_cooldown_error"), e);
+
+                        let result = interaction_clone.reply(&ctx_clone, content, true).await;
 
                         if let Err(e) = result {
                             tracing::error!("Failed to send reply: {:?}", e);
