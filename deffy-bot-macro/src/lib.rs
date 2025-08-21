@@ -147,3 +147,56 @@ pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     TokenStream::from(expanded)
 }
+
+/// สร้าง macro attribute ใหม่ `#[event(e = ...)]`
+#[proc_macro_attribute]
+pub fn event_handle(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let EventFnArgs { e_expr } = parse_macro_input!(attr as EventFnArgs);
+    let func = parse_macro_input!(item as ItemFn);
+    let func_name = &func.sig.ident;
+
+    // สร้างชื่อ struct จากชื่อฟังก์ชัน
+    let struct_name = Ident::new(
+        &format!("EventHandler{}", func_name.to_string().to_case(Case::Pascal)),
+        func_name.span(),
+    );
+
+    // สร้างชื่อ static instance
+    let static_name = Ident::new(
+        &format!("EVENT_HANDLER_{}", func_name.to_string().to_case(Case::Snake).to_uppercase()),
+        func_name.span(),
+    );
+
+    let expanded = quote! {
+        #func
+
+        struct #struct_name;
+
+        #[serenity::async_trait]
+        impl deffy_bot_utils::event::manager::UtilsEventHandler for #struct_name {
+            async fn handle(&self, data: deffy_bot_utils::event::manager::EventTypeData) -> Result<(), anyhow::Error> {
+                #func_name(data).await.map_err(|e| e.into())
+            }
+        }
+
+        impl EventInfo for #struct_name {
+            fn event_type(&self) -> deffy_bot_utils::event::manager::EventType {
+                #e_expr
+            }
+
+            fn boxed(&self) -> std::sync::Arc<dyn deffy_bot_utils::event::manager::UtilsEventHandler> {
+                std::sync::Arc::new(Self)
+            }
+        }
+
+        // ลงทะเบียนไว้ใน inventory
+        static #static_name: #struct_name = #struct_name;
+
+        inventory::submit! {
+            &#static_name as &dyn deffy_bot_utils::event::manager::EventInfo
+        }
+    };
+
+    TokenStream::from(expanded)
+    
+}

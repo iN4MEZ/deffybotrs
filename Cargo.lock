@@ -569,6 +569,7 @@ dependencies = [
  "anyhow",
  "axum",
  "deffy-bot-patreon-services",
+ "deffy-bot-utils",
  "dotenv",
  "tokio",
  "tracing",
@@ -625,7 +626,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "deffy-bot-patreon-services",
+ "inventory",
  "mongodb",
+ "once_cell",
  "serde",
  "serde_json",
  "serenity",

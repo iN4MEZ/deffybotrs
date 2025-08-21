@@ -14,6 +14,8 @@ tracing = {workspace = true}
 tracing-subscriber = {workspace = true}
 serde = { workspace = true}
 serde_json = { workspace = true }
+once_cell = {workspace = true}
+inventory = {workspace = true}
 
 [lib]
 name = "deffy_bot_utils"

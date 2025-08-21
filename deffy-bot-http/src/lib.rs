@@ -9,12 +9,12 @@ use dotenv::dotenv;
 
 mod routes;
 
-pub async fn init() -> Result<(), anyhow::Error> {
+pub async fn http_init() -> Result<(), anyhow::Error> {
     if let Err(_) = dotenv() {
         tracing::error!("Failed to load .env file");
     }
 
-    tracing::info!("Starting HTTP server...");
+    tracing::trace!("Starting HTTP server...");
 
     tokio::spawn(async {
         if let Err(e) = start_http().await {

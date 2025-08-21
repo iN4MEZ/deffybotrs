@@ -69,7 +69,7 @@ async fn on_message(ctx: Context, data: EventData) -> Result<(), anyhow::Error> 
 
                     let content = format!("Verified: {:?}", is_verified);
 
-                    let response = CreateInteractionResponse::Message(
+                    let response: CreateInteractionResponse = CreateInteractionResponse::Message(
                         CreateInteractionResponseMessage::new()
                             .content(content)
                             .ephemeral(true),

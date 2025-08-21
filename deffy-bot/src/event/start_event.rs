@@ -1,17 +1,22 @@
-use std::{env, sync::{Arc}};
-use deffy_bot_macro::event;
+use deffy_bot_macro::{event, event_handle};
+use deffy_bot_utils::event::manager::{EventInfo, EventTypeData};
+use deffy_bot_utils::event::manager::EventType::BotStarted;
 use once_cell::sync::OnceCell;
-use serenity::all::{Context, GuildId};
-use tokio::sync::{mpsc, Mutex};
+use serenity::all::{Context, GuildId, Http};
+use std::{env, sync::Arc};
+use tokio::sync::{Mutex, mpsc};
 
-use crate::{command::system::manager::{spawn_command_worker, CommandJob, CommandManager}, event::manager::EventData};
+pub static BOT_HTTP: OnceCell<Arc<Http>> = OnceCell::new();
 
+use crate::{
+    command::system::manager::{CommandJob, CommandManager, spawn_command_worker},
+    event::manager::EventData,
+};
 
 pub static COMMAND_MANAGER: OnceCell<Arc<Mutex<CommandManager>>> = OnceCell::new();
 
-
 #[event(e = ready)]
-async fn on_ready(ctx: Context, _data: EventData) -> Result<(),Error> {
+async fn on_ready(ctx: Context, _data: EventData) -> Result<(), Error> {
     let guild_id = GuildId::new(
         env::var("GUILD_ID")
             .expect("Expected GUILD_ID in environment")
@@ -23,25 +28,45 @@ async fn on_ready(ctx: Context, _data: EventData) -> Result<(),Error> {
 
     spawn_command_worker(rx).await;
 
-     // สร้าง Manager และ register
-     let mut manager = CommandManager::new(tx);
-     manager.register_commands();
+    // สร้าง Manager และ register
+    let mut manager = CommandManager::new(tx);
+    manager.register_commands();
 
-     let commands = manager.get_commands();
- 
-     // ใส่ลง Arc<Mutex> เพื่อให้ทั่วระบบ access ได้
-     let manager_arc = Arc::new(Mutex::new(manager));
-     if let Err(_) = COMMAND_MANAGER.set(manager_arc.clone()) {
-        tracing::error!("Failed to set command manager");   
-     }
+    let commands = manager.get_commands();
 
-    let commands = guild_id.set_commands(ctx.http, commands).await;
+    // ใส่ลง Arc<Mutex> เพื่อให้ทั่วระบบ access ได้
+    let manager_arc = Arc::new(Mutex::new(manager));
+    if let Err(_) = COMMAND_MANAGER.set(manager_arc.clone()) {
+        tracing::error!("Failed to set command manager");
+    }
+
+    let commands = guild_id.set_commands(&ctx.http, commands).await;
 
     match commands {
-        Ok(_) => tracing::info!("Commands registered successfully"),
+        Ok(_) => tracing::trace!("Commands registered successfully"),
         Err(e) => tracing::error!("Failed to register commands: {}", e),
     }
 
-    tracing::info!("Logged in as {}", ctx.cache.current_user().name);
+    BOT_HTTP.set(ctx.http.clone()).ok();
+
+    tracing::info!("Logged in as {}", &ctx.cache.current_user().name);
+
+    // EVENT_MANAGER
+    //     .lock()
+    //     .await
+    //     .emit(deffy_bot_utils::event::manager::EventType::BotStarted, ctx)
+    //     .await;
+    Ok(())
+}
+
+#[event_handle(e = BotStarted)]
+pub async fn handle_bot_started(_data: EventTypeData) -> Result<(), anyhow::Error> {
+    // let http = ctx.http.clone();
+    // let channel_id = ChannelId::new(1276313312178733116);
+
+    // let builder = CreateMessage::new().content("Test");
+
+    // channel_id.send_message(&http, builder).await?;
+
     Ok(())
 }

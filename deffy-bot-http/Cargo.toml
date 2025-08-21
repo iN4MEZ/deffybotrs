@@ -12,3 +12,5 @@ tokio = {workspace = true}
 anyhow = {workspace = true}
 
 deffy-bot-patreon-services = {workspace = true}
+deffy-bot-utils = { path = "../deffy-bot-utils"}
+

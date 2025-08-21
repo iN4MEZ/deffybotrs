@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use axum::{body::Bytes, extract::State, http::{HeaderMap, StatusCode}, response::IntoResponse, routing::post, Router};
 use deffy_bot_patreon_services::{Event, Webhook};
+use deffy_bot_utils::event::manager::EVENT_MANAGER;
 
 pub async fn routes() -> Router {
 
@@ -35,23 +36,26 @@ async fn root(
         _ => {}
     }
 
-    match state.check_signature(&body, signature) {
-        Ok(true) => tracing::trace!("Signature is valid"),
-        Ok(false) => {
-            tracing::error!("Invalid signature: {}", signature);
-            return (StatusCode::UNAUTHORIZED, "Invalid signature");
-        }
-        Err(e) => {
-            tracing::error!("Error checking signature: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error");
-        }
-    }
+    // match state.check_signature(&body, signature) {
+    //     Ok(true) => tracing::trace!("Signature is valid"),
+    //     Ok(false) => {
+    //         tracing::error!("Invalid signature: {}", signature);
+    //         return (StatusCode::UNAUTHORIZED, "Invalid signature");
+    //     }
+    //     Err(e) => {
+    //         tracing::error!("Error checking signature: {:?}", e);
+    //         return (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error");
+    //     }
+    // }
 
     match state.parse_event(&body, trigger) {
         Ok(event) => {
             match event {
                 Event::CreateMember(member) => {
                     tracing::trace!("🎉 New member joined: {:?}", member);
+
+                    EVENT_MANAGER.lock().await.emit(deffy_bot_utils::event::manager::EventType::PatreonWebhookUserCreated,deffy_bot_utils::event::manager::EventTypeData::PatreonData(member.attributes.full_name)).await;
+                    
                 }
                 Event::UpdateMember(member) => {
                     tracing::trace!("🔄 Member updated: {:?}", member);

@@ -70,7 +70,7 @@ impl TranslationManager {
 pub static TRANSLATIONS: Lazy<RwLock<TranslationManager>> = Lazy::new(|| {
     let mut tm = TranslationManager::new("en-US");
 
-    let project_root = env!("CARGO_MANIFEST_DIR"); // ได้ path ไปยัง root ของโปรเจกต์
+    let project_root = env!("CARGO_MANIFEST_DIR"); //Root path of the project
     let path = Path::new(project_root).parent().unwrap().join(r"data\locales");
 
     if path.exists() {
