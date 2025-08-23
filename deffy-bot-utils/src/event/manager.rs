@@ -1,12 +1,13 @@
 use std::{collections::HashMap, sync::Arc};
 
+use deffy_bot_patreon_services::{ApiDocument, MemberAttributes};
 use once_cell::sync::Lazy;
 use serenity::async_trait;
 use tokio::sync::Mutex;
 
 #[derive(Clone)]
 pub enum EventTypeData {
-    PatreonData(String)
+    PatreonMemberData(ApiDocument<MemberAttributes>)
 }
 
 inventory::collect!(&'static dyn EventInfo);
@@ -16,7 +17,8 @@ pub static EVENT_MANAGER: Lazy<Mutex<EventManager>> = Lazy::new(|| Mutex::new(Ev
 #[derive(Hash, Eq, PartialEq, Debug, Clone)]
 pub enum EventType {
     PatreonWebhookUserCreated,
-    BotStarted,
+    PatreonWebhookUserUpdated,
+    PatreonWebhookUserDeleted,
 }
 
 pub struct EventManager {
@@ -49,9 +51,6 @@ impl EventManager {
 
     pub async fn register_event(&mut self, event: EventType, handler: Arc<dyn UtilsEventHandler>) {
         let mut handlers = self.event_handlers.lock().await;
-
-        tracing::debug!("Registering handler for event: {:?}", event);
-
         handlers.entry(event).or_default().push(handler);
     }
 

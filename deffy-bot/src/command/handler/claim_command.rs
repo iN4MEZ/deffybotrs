@@ -46,7 +46,7 @@ impl CommandHandler for ClaimCommand {
                 .ephemeral(true),
         );
 
-        interaction.create_response(ctx.http, response).await?;
+        interaction.create_response(&ctx.http, response).await?;
 
         Ok(())
     }

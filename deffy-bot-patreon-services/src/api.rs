@@ -28,7 +28,7 @@ impl PatreonApi {
         url.set_path(format!("/api/oauth2/v2/campaigns/{campaign_id}/members").as_str());
 
         url.query_pairs_mut()
-            .append_pair("fields[member]", "full_name,email,patron_status");
+            .append_pair("fields[member]", "full_name,email,patron_status,last_charge_date,last_charge_status,lifetime_support_cents,next_charge_date,is_follower");
         let request = self.agent.get(url);
 
         let first: PatreonResult<(Vec<Member>, Link<String>)> = self.call_data_and_link(request).await;
@@ -261,11 +261,11 @@ pub struct MemberAttributes {
     // pub currently_entitled_amount_cents: i64,
     pub email: Option<String>,
     pub full_name: String,
-    // pub is_follower: bool,
-    // pub last_charge_date: Option<DateTime<Utc>>,
-    // pub last_charge_status: Option<LastChrgeStatus>,
-    // pub lifetime_support_cents: i64,
-    // pub next_charge_date: Option<DateTime<Utc>>,
+    pub is_follower: bool,
+    pub last_charge_date: Option<DateTime<Utc>>,
+    pub last_charge_status: Option<LastChrgeStatus>,
+    pub lifetime_support_cents: i64,
+    pub next_charge_date: Option<DateTime<Utc>>,
     // pub note: String,
     pub patron_status: Option<PatronStatus>,
     // pub pledge_cadence: Option<i64>,

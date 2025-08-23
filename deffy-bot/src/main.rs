@@ -26,12 +26,9 @@ async fn main() {
         tracing::error!("Failed to initialize HTTP server: {:?}", e);
     }
 
-    #[cfg(not(debug_assertions))]
-    {
-        match init_database().await {
-            Ok(_) => tracing::info!("Database initialized successfully"),
-            Err(e) => tracing::error!("Failed to initialize database: {:?}", e),
-        }
+    match init_database().await {
+        Ok(_) => tracing::info!("Database initialized successfully"),
+        Err(e) => tracing::error!("Failed to initialize database: {:?}", e),
     }
 
     match init_discord_client().await {
@@ -57,7 +54,7 @@ fn init_logging() {
         .init();
 }
 
-async fn _init_database() -> Result<(), anyhow::Error> {
+async fn init_database() -> Result<(), anyhow::Error> {
     let db = deffy_bot_utils::database::DatabaseManager::init_db().await;
 
     match db {

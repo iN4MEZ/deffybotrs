@@ -4,7 +4,7 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use anyhow::{Error, Ok};
+use anyhow::Error;
 use chrono::Utc;
 use deffy_bot_macro::{command, event};
 use once_cell::sync::Lazy;
@@ -121,7 +121,7 @@ async fn send_ban_menu(ctx: &Context, interaction: &CommandInteraction) -> Resul
     {
         let active = ACTIVE_BANS_MENU.lock().await;
 
-        if active.contains_key(run_owner_id) {
+        if active.contains_key(&run_owner_id) {
             return Err(anyhow::anyhow!("You already run ban command!"));
         }
     }
@@ -195,47 +195,41 @@ async fn send_ban_menu(ctx: &Context, interaction: &CommandInteraction) -> Resul
     {
         let mut active = ACTIVE_BANS_MENU.lock().await;
 
-        active.insert(run_owner_id.clone(), msg.id);
+        active.insert(*run_owner_id, msg.id);
     }
-
-    let ctx_clone = ctx.clone();
-    let msg_clone = msg.clone();
-    let run_owner_id_clone = run_owner_id.clone();
-    let custom_id_clone = custom_id.clone();
 
     let (stop_tx, stop_rx) = mpsc::unbounded_channel();
 
-    COLLECTOR_STOPS
-        .lock()
-        .await
-        .insert(run_owner_id_clone, stop_tx);
+    COLLECTOR_STOPS.lock().await.insert(*run_owner_id, stop_tx);
 
     run_ban_collector_timeout_awaiter(
         timeout,
-        &ctx_clone,
-        run_owner_id_clone,
-        msg_clone,
+        &ctx,
+        &run_owner_id,
+        &msg,
         interaction.clone(),
         stop_rx,
     )
     .await;
 
+    let custom_id_clone = custom_id.clone();
+
     let mut collector = ComponentInteractionCollector::new(&ctx.shard)
-        .filter(move |mci| mci.data.custom_id == custom_id)
+        .filter(move |mci| mci.data.custom_id == custom_id_clone)
         .timeout(timeout)
         .stream();
 
     while let Some(interaction) = collector.next().await {
         if let ComponentInteractionDataKind::UserSelect { values } = &interaction.data.kind {
             // Protect if a user tries to select
-            if interaction.user.id != run_owner_id_clone {
+            if interaction.user.id != *run_owner_id {
                 continue;
             }
 
             let user_count = values.len();
 
             let select_menu = create_select_menu(
-                &custom_id_clone,
+                &custom_id,
                 "please select users",
                 CreateSelectMenuKind::User {
                     default_users: Some(Vec::new()),
@@ -309,8 +303,8 @@ fn create_select_menu(
 async fn run_ban_collector_timeout_awaiter(
     timeout: Duration,
     ctx: &Context,
-    run_owner_id: UserId,
-    msg: Message,
+    run_owner_id: &UserId,
+    msg: &Message,
     interaction: CommandInteraction,
     mut stop_rx: mpsc::UnboundedReceiver<()>, // เพิ่ม receiver สำหรับหยุด
 ) {
@@ -333,7 +327,6 @@ async fn run_ban_collector_timeout_awaiter(
         let mut active = ACTIVE_BANS_MENU.lock().await;
         active.remove(&run_owner_id_clone);
         COLLECTOR_STOPS.lock().await.remove(&run_owner_id_clone);
-
 
         interaction
             .create_followup(
@@ -359,102 +352,92 @@ async fn run_ban_collector_timeout_awaiter(
 }
 
 #[event(e = interaction_create)]
-async fn on_interaction(ctx: Context, data: EventData) {
+async fn on_interaction(ctx: Context, data: EventData) -> anyhow::Result<()> {
     if let EventData::Interaction(interaction) = data {
         if let Some(sm) = interaction.as_message_component() {
             let user_interact_id = sm.user.id;
-
             let active = ACTIVE_BANS_MENU.lock().await;
+            if !active.contains_key(&user_interact_id) {
+                return Ok(());
+            }
 
-            if active.contains_key(&user_interact_id) {
-                let select_menu_id = format!("banuser:{}", user_interact_id);
+            let select_menu_id = format!("banuser:{}", user_interact_id);
+            let custom_id = sm.data.custom_id.as_str();
 
-                match sm.data.custom_id.as_str() {
-                    id if id.starts_with("confirmbanbtn:") => {
-                        if let Some(owner_id_str) = id.strip_prefix("confirmbanbtn:") {
-                            if let Some(owner_id) = owner_id_str.parse::<u64>().ok() {
-                                if sm.user.id.get() == owner_id {
-                                    if let Some(message_id) = active.get(&user_interact_id).cloned()
+            match custom_id {
+                id if id.starts_with("confirmbanbtn:") => {
+                    if let Some(owner_id_str) = id.strip_prefix("confirmbanbtn:") {
+                        if let Ok(owner_id) = owner_id_str.parse::<u64>() {
+                            if sm.user.id.get() == owner_id {
+                                if let Some(message_id) = active.get(&user_interact_id).cloned() {
+                                    sm.channel_id.delete_message(&ctx.http, message_id).await?;
+
+                                    let ban_result =
+                                        handle_moderate_action(&ctx, sm, &ModeratorAction::Ban)
+                                            .await;
+
+                                    if let Some(stop_tx) =
+                                        COLLECTOR_STOPS.lock().await.remove(&user_interact_id)
                                     {
-                                        sm.channel_id.delete_message(&ctx.http, message_id).await?;
-
-                                        let ban_result =
-                                            handle_moderate_action(&ctx, sm, &ModeratorAction::Ban)
-                                                .await;
-
-                                        if let Some(stop_tx) = COLLECTOR_STOPS
-                                                .lock()
-                                                .await
-                                                .remove(&user_interact_id)
-                                            {
-                                                stop_tx.send(())?; // ส่งสัญญาณหยุด
-                                            }
-
-                                        if let Err(err) = ban_result {
-                                            sm.create_response(
-                                                &ctx.http,
-                                                CreateInteractionResponse::Message(
-                                                    CreateInteractionResponseMessage::new()
-                                                        .content(format!("```Error: {}```", err))
-                                                        .ephemeral(true),
-                                                ),
-                                            )
-                                            .await?;
-                                        }
-                                    } else {
-                                        tracing::warn!(
-                                            "No active ban found for user: {}",
-                                            user_interact_id
-                                        );
+                                        stop_tx.send(())?;
                                     }
+
+                                    if let Err(err) = ban_result {
+                                        sm.create_response(
+                                            &ctx.http,
+                                            CreateInteractionResponse::Message(
+                                                CreateInteractionResponseMessage::new()
+                                                    .content(format!("```Error: {}```", err))
+                                                    .ephemeral(true),
+                                            ),
+                                        )
+                                        .await?;
+                                    }
+                                } else {
+                                    tracing::warn!(
+                                        "No active ban found for user: {}",
+                                        user_interact_id
+                                    );
                                 }
                             }
                         }
-                    }
-
-                    id if id == select_menu_id => {
-                        if let ComponentInteractionDataKind::UserSelect { values } = &sm.data.kind {
-
-                            handle_select(user_interact_id, values.clone()).await;
-
-                            sm.create_response(&ctx.http, CreateInteractionResponse::Acknowledge)
-                                .await?;
-                        }
-                    }
-
-                    id if id.starts_with("cancelbanbtn:") => {
-                        if let Some(owner_id_str) = id.strip_prefix("cancelbanbtn:") {
-                            if let Some(owner_id) = owner_id_str.parse::<u64>().ok() {
-                                if sm.user.id.get() == owner_id {
-                                    if let Some(message_id) = active.get(&user_interact_id).cloned()
-                                    {
-                                        if let Some(stop_tx) =
-                                            COLLECTOR_STOPS.lock().await.remove(&user_interact_id)
-                                        {
-                                            stop_tx.send(())?; // ส่งสัญญาณหยุด
-                                        }
-                                        sm.channel_id.delete_message(&ctx.http, message_id).await?;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    _ => {
-                        tracing::warn!(
-                            "Unknown interaction type or custom_id: {}",
-                            sm.data.custom_id
-                        );
                     }
                 }
-            } else {
-                sm.create_response(&ctx.http, CreateInteractionResponse::Acknowledge)
-                    .await?;
+
+                id if id == select_menu_id => {
+                    if let ComponentInteractionDataKind::UserSelect { values } = &sm.data.kind {
+                        handle_select(user_interact_id, values.clone()).await;
+
+                        sm.create_response(&ctx.http, CreateInteractionResponse::Acknowledge)
+                            .await?;
+                    }
+                }
+
+                id if id.starts_with("cancelbanbtn:") => {
+                    if let Some(owner_id_str) = id.strip_prefix("cancelbanbtn:") {
+                        if let Ok(owner_id) = owner_id_str.parse::<u64>() {
+                            if sm.user.id.get() == owner_id {
+                                if let Some(message_id) = active.get(&user_interact_id).cloned() {
+                                    if let Some(stop_tx) =
+                                        COLLECTOR_STOPS.lock().await.remove(&user_interact_id)
+                                    {
+                                        stop_tx.send(())?;
+                                    }
+                                    sm.channel_id.delete_message(&ctx.http, message_id).await?;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                _ => {
+                    tracing::warn!("Unknown interaction type or custom_id: {}", custom_id);
+                }
             }
         }
     }
     Ok(())
 }
-
 async fn handle_select(user_interact_id: UserId, values: Vec<UserId>) {
     {
         let mut bans = BANS.lock().await;
@@ -489,7 +472,6 @@ async fn handle_moderate_action(
             for user in bans.iter() {
                 if user.admin_id == Some(user_interact_id) {
                     for target_user in &user.users {
-
                         if target_user == &user_interact_id {
                             continue;
                         }
@@ -498,7 +480,10 @@ async fn handle_moderate_action(
                             .guild_id
                             .and_then(|guild_id| guild_id.to_guild_cached(&ctx.cache))
                             .and_then(|guild| {
-                                guild.members.get(target_user).map(|member| guild.member_permissions(member))
+                                guild
+                                    .members
+                                    .get(target_user)
+                                    .map(|member| guild.member_permissions(member))
                             });
 
                         if let Some(permissions) = member_permissions {

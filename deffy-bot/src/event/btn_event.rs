@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use anyhow::Ok;
 use deffy_bot_localization::tr;
 use deffy_bot_macro::event;
 use deffy_bot_utils::builder_utils::ModalBuilder;
@@ -34,6 +35,8 @@ async fn on_message(ctx: Context, data: EventData) -> Result<(), anyhow::Error> 
                             .ephemeral(true),
                     );
                     btn.create_response(&ctx.http, response).await?;
+
+                    return Ok(());
                 }
 
                 btn.create_response(&ctx.http, modal).await?;

@@ -17,6 +17,8 @@ serde_json = { workspace = true }
 once_cell = {workspace = true}
 inventory = {workspace = true}
 
+chrono = { version = "0.4", features = ["serde"] }
+
 [lib]
 name = "deffy_bot_utils"
 path = "src/lib.rs"

@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::{Error, Ok};
 use deffy_bot_macro::command;
 use deffy_bot_utils::database::DiscordServerDatabaseManager;
 use serenity::{
@@ -34,6 +34,9 @@ impl CommandHandler for SetupCommand {
             }
             "setlogchannel" => {
                 handle_set_logging_channel(&interaction).await?;
+            }
+            "set_webhook_channel" => {
+                handle_set_webhook_membercreated_channel(&interaction).await?;
             }
             _ => {}
         }
@@ -78,6 +81,34 @@ impl CommandHandler for SetupCommand {
                     .required(true),
                 ),
             )
+            .add_option(
+                CreateCommandOption::new(
+                    CommandOptionType::SubCommand,
+                    "set_webhook_channel",
+                    "set webhook channel",
+                )
+                .add_sub_option(
+                    CreateCommandOption::new(
+                        CommandOptionType::String,
+                        "webhook_event",
+                        "webhook event",
+                    )
+                    .add_string_choice("webhook_event_created", "webhook_event_created")
+                    .required(true)
+                    .add_string_choice("webhook_event_updated", "webhook_event_updated")
+                    .required(true)
+                    .add_string_choice("webhook_event_deleted", "webhook_event_deleted")
+                    .required(true),
+                )
+                .add_sub_option(
+                    CreateCommandOption::new(
+                        CommandOptionType::Channel,
+                        "webhookchannel",
+                        "what channel",
+                    )
+                    .required(true),
+                ),
+            )
     }
 }
 
@@ -106,6 +137,55 @@ pub async fn handle_set_logging_channel(interaction: &CommandInteraction) -> Res
             .await;
     }
     Err(anyhow::anyhow!("Guild ID not found"))
+}
+
+// TODO: event subvalue
+pub async fn handle_set_webhook_membercreated_channel(
+    interaction: &CommandInteraction,
+) -> Result<(), Error> {
+    let event_action = get_sub_option_value(&interaction, "webhook_event");
+
+    let guild_id = &interaction.guild_id;
+
+    let Some(CommandDataOptionValue::Channel(channel_id)) =
+        get_sub_option_value(interaction, "webhookchannel")
+    else {
+        return Err(anyhow::anyhow!("No channel ID found"));
+    };
+
+    Ok(if let Some(guild_id) = guild_id {
+        if let Some(CommandDataOptionValue::String(event_action)) = event_action {
+            match event_action.as_str() {
+                "webhook_event_created" => {
+                    return DiscordServerDatabaseManager::set_webhook_channel(
+                        guild_id.get(),
+                        channel_id.get(),
+                        deffy_bot_utils::database::DatabaseWebHookEvent::CreateMember,
+                    )
+                    .await;
+                }
+                "webhook_event_updated" => {
+                    return DiscordServerDatabaseManager::set_webhook_channel(
+                        guild_id.get(),
+                        channel_id.get(),
+                        deffy_bot_utils::database::DatabaseWebHookEvent::UpdateMember,
+                    )
+                    .await;
+                }
+                "webhook_event_deleted" => {
+                    return DiscordServerDatabaseManager::set_webhook_channel(
+                        guild_id.get(),
+                        channel_id.get(),
+                        deffy_bot_utils::database::DatabaseWebHookEvent::DeleteMember,
+                    )
+                    .await;
+                }
+                _ => return Err(anyhow::anyhow!("Guild ID not found")),
+            }
+        } else {
+            return Err(anyhow::anyhow!("Invalid event action"));
+        }
+    })
 }
 
 pub fn get_sub_option_value<'a>(

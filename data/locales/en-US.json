@@ -2,5 +2,7 @@
     "test": "test translation",
     "command_execution_error": "Error Command Execution:",
     "command_cooldown_error": "You're using command too fast! remaining.",
-    "button_cooldown_error": "You're using this button too fast! Please wait."
+    "button_cooldown_error": "You're using this button too fast! Please wait.",
+    "verify_already_active_member_error": "You're Paid Member In Patreon, Please enter discord server via Patreon-connected account for get role.",
+    "404_db_error": "Error 404: Database Error"
 }

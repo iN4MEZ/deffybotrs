@@ -3,6 +3,7 @@ use std::sync::Arc;
 use axum::{body::Bytes, extract::State, http::{HeaderMap, StatusCode}, response::IntoResponse, routing::post, Router};
 use deffy_bot_patreon_services::{Event, Webhook};
 use deffy_bot_utils::event::manager::EVENT_MANAGER;
+use deffy_bot_utils::event::manager::EventTypeData::PatreonMemberData;
 
 pub async fn routes() -> Router {
 
@@ -52,16 +53,15 @@ async fn root(
         Ok(event) => {
             match event {
                 Event::CreateMember(member) => {
-                    tracing::trace!("🎉 New member joined: {:?}", member);
-
-                    EVENT_MANAGER.lock().await.emit(deffy_bot_utils::event::manager::EventType::PatreonWebhookUserCreated,deffy_bot_utils::event::manager::EventTypeData::PatreonData(member.attributes.full_name)).await;
+                    EVENT_MANAGER.lock().await.emit(deffy_bot_utils::event::manager::EventType::PatreonWebhookUserCreated,PatreonMemberData(member)).await;
                     
                 }
                 Event::UpdateMember(member) => {
-                    tracing::trace!("🔄 Member updated: {:?}", member);
+                    EVENT_MANAGER.lock().await.emit(deffy_bot_utils::event::manager::EventType::PatreonWebhookUserUpdated,PatreonMemberData(member)).await;
+                    
                 }
                 Event::DeleteMember(member) => {
-                    tracing::trace!("❌ Member left: {:?}", member);
+                    EVENT_MANAGER.lock().await.emit(deffy_bot_utils::event::manager::EventType::PatreonWebhookUserDeleted,PatreonMemberData(member)).await;
                 }
                 _ => tracing::trace!("ℹ️ Other event: {:?}", event),
             }

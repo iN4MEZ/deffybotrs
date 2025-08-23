@@ -1,6 +1,14 @@
+use deffy_bot_localization::tr;
 use deffy_bot_macro::event;
-use deffy_bot_utils::{builder_utils::ModalBuilder, database::{DiscordServerDatabaseManager, PatreonVerification}};
-use serenity::all::{Context, CreateInteractionResponse, CreateInteractionResponseMessage, RoleId};
+use deffy_bot_utils::{
+    builder_utils::ModalBuilder,
+    database::{DiscordServerDatabaseManager, PatreonVerification},
+};
+use serenity::all::{
+    ChannelId, Colour, Context, CreateEmbed, CreateEmbedFooter, CreateInteractionResponse,
+    CreateInteractionResponseMessage, CreateMessage,
+    ModalInteraction, RoleId, Timestamp,
+};
 
 use crate::event::manager::EventData;
 
@@ -21,14 +29,24 @@ async fn on_message(ctx: Context, data: EventData) -> Result<(), anyhow::Error> 
                         .map(|(_, value)| value.clone())
                         .unwrap_or_default();
 
-                    let is_verified = PatreonVerification::new(patreon_email.clone())
+                    let patreon_verification = PatreonVerification::new(patreon_email.clone());
+                    let is_verified = patreon_verification
                         .verify()
                         .await;
 
-                    if let Ok(verify) = is_verified {
+                    if let Err(e) = &is_verified {
+                        if e.to_string().contains("409") {
+                            send_modal_response("verify_already_active_member_error", &ctx, &modal)
+                                .await?;
+                        }
+                    }
+
+                    if let Ok(verify) = &is_verified {
                         // Add roles
 
-                        if verify {
+                        let email = verify.1;
+
+                        if verify.0 {
                             let role_id = DiscordServerDatabaseManager::get_verify_roles().await;
 
                             if let Some(role_id) = role_id {
@@ -40,42 +58,47 @@ async fn on_message(ctx: Context, data: EventData) -> Result<(), anyhow::Error> 
                                     .await
                                 {
                                     if !has_role {
-                                        tracing::debug!("Role Added!");
-                                        if let Err(err) = modal
+                                        modal
                                             .member
                                             .as_ref()
                                             .unwrap()
                                             .add_role(&ctx.http, role_id)
-                                            .await
+                                            .await?;
+                                        let embed = CreateEmbed::default()
+                                            .title("✅ User Verified")
+                                            .description(format!(
+                                                "*User {} has been verified*\n*{}*",
+                                                &modal.user.name,
+                                                &email,
+                                                ))
+                                            .color(Colour::new(0x00ff04))
+                                            .timestamp(Timestamp::now())
+                                            .thumbnail(modal.user.avatar_url().unwrap())
+                                            .footer(CreateEmbedFooter::new("Verify date"));
+
+                                        if let Some(channel_id) =
+                                            DiscordServerDatabaseManager::get_logging_channel()
+                                                .await
                                         {
-                                            tracing::error!("{err}");
+                                            let channel_id = ChannelId::new(channel_id);
+                                            channel_id
+                                                .send_message(
+                                                    &ctx.http,
+                                                    CreateMessage::new().embed(embed),
+                                                )
+                                                .await?;
+
+                                            let response = CreateInteractionResponse::Acknowledge;
+
+                                            modal.create_response(&ctx.http, response).await?;
                                         }
                                     }
                                 }
                             } else {
-                                let content = format!("Database Error: Role not found");
-
-                                let response = CreateInteractionResponse::Message(
-                                    CreateInteractionResponseMessage::new()
-                                        .content(content)
-                                        .ephemeral(true),
-                                );
-                                modal
-                                    .create_response(&ctx.http, response)
-                                    .await?;
+                                send_modal_response("404_db_error", &ctx, &modal).await?;
                             }
                         }
                     }
-
-                    let content = format!("Verified: {:?}", is_verified);
-
-                    let response: CreateInteractionResponse = CreateInteractionResponse::Message(
-                        CreateInteractionResponseMessage::new()
-                            .content(content)
-                            .ephemeral(true),
-                    );
-
-                    modal.create_response(&ctx.http, response).await?;
                 }
                 _ => {
                     // Handle other custom_ids if needed
@@ -83,5 +106,22 @@ async fn on_message(ctx: Context, data: EventData) -> Result<(), anyhow::Error> 
             }
         }
     }
+    Ok(())
+}
+
+async fn send_modal_response(
+    msg_code: &str,
+    ctx: &Context,
+    modal: &ModalInteraction,
+) -> Result<(), anyhow::Error> {
+    let msg = tr!(&modal.locale, msg_code);
+
+    let response = CreateInteractionResponse::Message(
+        CreateInteractionResponseMessage::new()
+            .content(format!("```{}```", msg))
+            .ephemeral(true),
+    );
+    modal.create_response(&ctx.http, response).await?;
+
     Ok(())
 }

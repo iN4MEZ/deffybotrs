@@ -1,6 +1,4 @@
-use deffy_bot_macro::{event, event_handle};
-use deffy_bot_utils::event::manager::{EventInfo, EventTypeData};
-use deffy_bot_utils::event::manager::EventType::BotStarted;
+use deffy_bot_macro::event;
 use once_cell::sync::OnceCell;
 use serenity::all::{Context, GuildId, Http};
 use std::{env, sync::Arc};
@@ -50,23 +48,6 @@ async fn on_ready(ctx: Context, _data: EventData) -> Result<(), Error> {
     BOT_HTTP.set(ctx.http.clone()).ok();
 
     tracing::info!("Logged in as {}", &ctx.cache.current_user().name);
-
-    // EVENT_MANAGER
-    //     .lock()
-    //     .await
-    //     .emit(deffy_bot_utils::event::manager::EventType::BotStarted, ctx)
-    //     .await;
-    Ok(())
-}
-
-#[event_handle(e = BotStarted)]
-pub async fn handle_bot_started(_data: EventTypeData) -> Result<(), anyhow::Error> {
-    // let http = ctx.http.clone();
-    // let channel_id = ChannelId::new(1276313312178733116);
-
-    // let builder = CreateMessage::new().content("Test");
-
-    // channel_id.send_message(&http, builder).await?;
 
     Ok(())
 }
