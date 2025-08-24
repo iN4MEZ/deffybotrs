@@ -1,5 +1,14 @@
 {
+    "test": "テスト翻訳",
     "command_execution_error": "コマンド実行エラー:",
-    "command_cooldown_error": "コマンドの使用が早すぎます！ クールダウンが残っています。",
-    "button_cooldown_error": "このボタンを押すのが早すぎます！ 少しお待ちください。"
+    "command_cooldown_error": "コマンドの使用が早すぎます！ 残り時間があります。",
+    "button_cooldown_error": "このボタンの使用が早すぎます！ 少し待ってください。",
+    "verify_already_active_member_error": "あなたはすでにPatreonの有料メンバーです。DiscordサーバーにはPatreonと連携したアカウントで参加し、ロールを取得してください。",
+    "404_db_error": "エラー404: データベースエラー",
+    "verify_msg_header": "認証方法",
+    "verify_msg_00": "認証されるには、DEFFYのPatreonメンバー（無料メンバーも含む）として登録されたメールアドレスで参加する必要があります。",
+    "verify_msg_01": "「Click Me」ボタンをクリックして、参加したPatreonメールアドレスを入力してください。",
+    "verify_msg_02": "上の画像を参考にできます。",
+    "verify_msg_03": "重要: 有料メンバーのメールでは直接認証できません。DiscordサーバーにはPatreon機能を通じて参加し、ロールを取得してください。",
+    "verify_msg_04": "重要: 無料メンバーと有料メンバーは別扱いです。"
 }

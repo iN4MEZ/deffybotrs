@@ -1,5 +1,14 @@
 {
+    "test": "测试翻译",
     "command_execution_error": "命令执行错误：",
-    "command_cooldown_error": "你使用命令太快了！请等待冷却时间结束。",
-    "button_cooldown_error": "你点击按钮太快了！请稍等。"
+    "command_cooldown_error": "您使用命令太快了！请稍等，还有冷却时间。",
+    "button_cooldown_error": "您点击这个按钮太快了！请稍候。",
+    "verify_already_active_member_error": "您已经是 Patreon 的付费会员，请通过已连接 Patreon 的账号加入 Discord 服务器以获得角色。",
+    "404_db_error": "错误404：数据库错误",
+    "verify_msg_header": "如何验证",
+    "verify_msg_00": "要完成验证，您必须加入 DEFFY 的 Patreon 会员（包括免费会员），并使用已注册的邮箱。",
+    "verify_msg_01": "点击 *Click Me* 按钮，输入您加入 Patreon 时使用的邮箱。",
+    "verify_msg_02": "您可以参考上面的示例图片。",
+    "verify_msg_03": "重要：您不能直接使用付费会员邮箱来验证，请通过 Patreon 功能加入 Discord 服务器以获得角色。",
+    "verify_msg_04": "重要：免费会员和付费会员是分开的。"
 }

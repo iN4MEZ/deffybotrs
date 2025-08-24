@@ -55,6 +55,11 @@ fn init_logging() {
 }
 
 async fn init_database() -> Result<(), anyhow::Error> {
+    if cfg!(debug_assertions) {
+        tracing::info!("Database initialization skipped in debug mode");
+        return Ok(());
+    }
+
     let db = deffy_bot_utils::database::DatabaseManager::init_db().await;
 
     match db {

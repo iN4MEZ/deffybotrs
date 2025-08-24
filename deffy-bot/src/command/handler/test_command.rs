@@ -9,7 +9,7 @@ use serenity::{
 
 use crate::command::system::{interaction_reply::InteractionExt, manager::{CommandHandler, CommandInfo}};
 
-#[command(cmd = test, cooldown = 30)]
+#[command(cmd = test, cooldown = 5)]
 pub struct TestCommand;
 
 #[async_trait]

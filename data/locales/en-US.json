@@ -4,5 +4,11 @@
     "command_cooldown_error": "You're using command too fast! remaining.",
     "button_cooldown_error": "You're using this button too fast! Please wait.",
     "verify_already_active_member_error": "You're Paid Member In Patreon, Please enter discord server via Patreon-connected account for get role.",
-    "404_db_error": "Error 404: Database Error"
+    "404_db_error": "Error 404: Database Error",
+    "verify_msg_header": "HOW TO VERIFY",
+    "verify_msg_00": "To be verified, you must join DEFFY's Patreon member (free member include) to registered email.",
+    "verify_msg_01": "Click The *Click Me* button to input the patreon email you have join.",
+    "verify_msg_02": "You can follow the picture up there.",
+    "verify_msg_03": "Important: You can't verify as Paid member email, Please Join discord server though patreon features for get role.",
+    "verify_msg_04": "Important: Free member and Paid member are seperate."
 }
