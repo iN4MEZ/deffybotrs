@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, str::FromStr};
 
 use axum::{
     Router, body::Body, extract::ConnectInfo, http::Request, middleware::Next, response::Response,
@@ -28,7 +28,9 @@ async fn start_http() -> Result<(), std::io::Error> {
     let app = Router::new().route("/", get(root))
     .nest("/patreon/webhook", routes::patreon_webhook::routes().await);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
+    let addr_str = std::env::var("HTTP_ADDR").unwrap_or_else(|_| "127.0.0.1:10000".to_string());
+
+    let addr = SocketAddr::from_str(&addr_str).unwrap();
 
     tracing::info!("Listening on {}", addr);
 
