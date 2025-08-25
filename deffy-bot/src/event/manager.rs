@@ -15,7 +15,7 @@ pub trait Hookable: Sync + Send + 'static {
 
 inventory::collect!(&'static dyn Hookable);
 
-pub async fn spawn_event_dispatcher(
+pub fn spawn_event_dispatcher(
     mut rx: mpsc::Receiver<(String, Context, EventData)>,
 ) {
     tokio::spawn(async move {

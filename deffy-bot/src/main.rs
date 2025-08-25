@@ -79,7 +79,7 @@ async fn init_database() -> Result<(), anyhow::Error> {
 async fn init_discord_client() -> Result<(), serenity::Error> {
     let (tx, rx) = mpsc::channel(100);
 
-    spawn_event_dispatcher(rx).await;
+    spawn_event_dispatcher(rx);
 
     let token = env::var("DISCORD_TOKEN")
         .expect("Expected a token in the environment")
