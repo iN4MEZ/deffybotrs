@@ -70,8 +70,10 @@ impl TranslationManager {
 pub static TRANSLATIONS: Lazy<RwLock<TranslationManager>> = Lazy::new(|| {
     let mut tm = TranslationManager::new("en-US");
 
+   let folder_path = std::env::var("LOCALIZE_DIR").unwrap_or_else(|_| r"data\locales".to_string());
+
     let project_root = env!("CARGO_MANIFEST_DIR"); //Root path of the project
-    let path = Path::new(project_root).parent().unwrap().join(r"data\locales");
+    let path = Path::new(project_root).parent().unwrap().join(format!("{}", folder_path));
 
     if path.exists() {
         tm.load_from_dir(&path.to_str().unwrap())
