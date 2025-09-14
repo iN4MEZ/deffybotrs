@@ -4,3 +4,4 @@ pub mod command_execute;
 pub mod modal_event;
 pub mod btn_event;
 pub mod api;
+pub mod event_router;

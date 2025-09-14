@@ -94,10 +94,10 @@ async fn on_message(ctx: Context, data: EventData) -> Result<(), anyhow::Error> 
                                         }
                                     }
                                 }
-                            } else {
-                                send_modal_response("404_db_error", &ctx, &modal).await?;
                             }
                         }
+                    } else {
+                        send_modal_response("404_db_error", &ctx, &modal).await?;
                     }
                 }
                 _ => {

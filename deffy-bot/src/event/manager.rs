@@ -1,6 +1,8 @@
 use serenity::{all::Context, async_trait};
 use tokio::sync::mpsc;
 
+use crate::event::event_router::EVENT_ROUTER;
+
 #[derive(Clone)]
 pub enum EventData {
     Ready(serenity::model::prelude::Ready),
@@ -11,6 +13,7 @@ pub enum EventData {
 #[async_trait]
 pub trait Hookable: Sync + Send + 'static {
     async fn call(&self, event: &str, ctx: Context, data: EventData) -> Result<(), anyhow::Error>;
+    fn route(&self) -> Option<&'static str>;
 }
 
 inventory::collect!(&'static dyn Hookable);
@@ -21,6 +24,18 @@ pub fn spawn_event_dispatcher(
     tokio::spawn(async move {
         while let Some((event_name, ctx, data)) = rx.recv().await {
             for handler in inventory::iter::<&dyn Hookable> {
+                    let route_opt = handler.route();
+                    if let Some(route) = route_opt {
+
+                        if let EventData::Interaction(interaction) = &data {
+                            if let Some(user) = interaction.as_message_component().as_ref().and_then(|component| Some(component.user.id.as_ref())) {
+                                if !EVENT_ROUTER.check_gateway(route, &user) {
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+
                 if let Err(err) = handler.call(&event_name, ctx.clone(), data.clone()).await {
                     tracing::error!("[Event Error] {}: {:?}", event_name, err);
                 }
