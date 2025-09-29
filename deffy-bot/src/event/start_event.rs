@@ -8,7 +8,7 @@ pub static BOT_HTTP: OnceCell<Arc<Http>> = OnceCell::new();
 
 use crate::{
     command::{handler::moderator_command::BanSession, system::manager::{spawn_command_worker, CommandJob, CommandManager}},
-    event::manager::EventData, session::manager::UserSessionManager,
+    event::manager::EventData,
 };
 
 pub static COMMAND_MANAGER: OnceCell<Arc<Mutex<CommandManager>>> = OnceCell::new();
@@ -21,8 +21,6 @@ async fn on_ready(ctx: Context, _data: EventData) -> Result<(), Error> {
             .parse()
             .expect("GUILD_ID must be an integer"),
     );
-
-    UserSessionManager::new(&ctx).await;
 
     let (tx, rx) = mpsc::channel::<CommandJob>(100);
 

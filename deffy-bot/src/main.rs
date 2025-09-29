@@ -5,7 +5,6 @@ use std::env;
 
 mod command;
 mod event;
-mod session;
 use serenity::{Client, all::GatewayIntents};
 use tokio::sync::mpsc;
 

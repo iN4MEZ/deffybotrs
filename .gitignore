@@ -5,3 +5,7 @@ deffy-bot-http/src/certificates/key.pem
 deffy-bot-http/src/certificates/cert.pem
 /.cargo
 /deffy-bot/src/session
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/launch.json
