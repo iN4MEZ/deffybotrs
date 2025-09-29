@@ -47,7 +47,7 @@ fn init_logging() {
 
     #[cfg(not(debug_assertions))] // release
     {
-        use tracing_subscriber::{prelude::*, EnvFilter};
+        use tracing_subscriber::EnvFilter;
         let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| {
         if cfg!(debug_assertions) {
             "trace".to_string() // default debug build
