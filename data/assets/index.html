@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patreon Premium Member Card</title>
+<style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: radial-gradient(circle at top, #0e1a26, #000);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 30px;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .member-card {
+        position: relative;
+        width: 340px;
+        padding: 24px;
+        border-radius: 20px;
+        color: white;
+        overflow: hidden;
+        backdrop-filter: blur(20px);
+        background: rgba(255,255,255,0.08);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.15);
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    /* ✨ Gradient effect แยกสีตาม tier */
+    .member::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(130deg, rgba(0,200,255,0.4), rgba(0,120,255,0.2), rgba(0,200,255,0.4));
+        background-size: 300% 300%;
+        animation: gradientMove 6s ease infinite;
+        z-index: 0;
+        pointer-events: none;
+        border-radius: inherit;
+    }
+
+    .moonstone::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(130deg, rgba(200,140,255,0.4), rgba(120,80,255,0.7), rgba(200,140,255,0.2));
+        background-size: 300% 300%;
+        animation: gradientMove 6s ease infinite;
+        z-index: 0;
+        pointer-events: none;
+        border-radius: inherit;
+    }
+
+    .stardust::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(130deg, rgba(255,215,0,0.4), rgba(255,140,0,0.6), rgba(255,215,0,0.2));
+        background-size: 300% 300%;
+        animation: gradientMove 6s ease infinite;
+        z-index: 0;
+        pointer-events: none;
+        border-radius: inherit;
+    }
+
+    @keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* Extra border effect */
+    .moonstone::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 2px;
+        background: linear-gradient(120deg, violet, purple, blueviolet, violet);
+        background-size: 300% 300%;
+        animation: borderGlow 5s linear infinite;
+        -webkit-mask: 
+            linear-gradient(#000 0 0) content-box, 
+            linear-gradient(#000 0 0);
+        -webkit-mask-composite: destination-out;
+                mask-composite: exclude;
+        z-index: 1;
+    }
+
+    .stardust::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 2px;
+        background: linear-gradient(120deg, gold, orange, red, gold);
+        background-size: 300% 300%;
+        animation: borderGlow 4s linear infinite;
+        -webkit-mask: 
+            linear-gradient(#000 0 0) content-box, 
+            linear-gradient(#000 0 0);
+        -webkit-mask-composite: destination-out;
+                mask-composite: exclude;
+        z-index: 1;
+    }
+
+    @keyframes borderGlow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .crown-badge {
+        display: inline-block;
+        width: 26px;
+        height: 26px;
+        margin-left: 6px;
+        vertical-align: middle;
+        background: gold;
+        clip-path: polygon(
+            50% 0%, 65% 35%, 100% 35%, 
+            75% 60%, 85% 100%, 50% 80%, 
+            15% 100%, 25% 60%, 0% 35%, 
+            35% 35%
+        );
+        box-shadow: 0 0 8px gold, 0 0 15px orange;
+        animation: crownPulse 1.5s infinite alternate;
+    }
+    @keyframes crownPulse {
+        from { transform: scale(1); opacity: 1; }
+        to   { transform: scale(1.2); opacity: 0.8; }
+    }
+
+    /* ===== content ===== */
+    .watermark {
+        position: absolute;
+        font-size: 3.8rem;
+        font-weight: 800;
+        color: rgba(255,255,255,0.05);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-20deg);
+        white-space: nowrap;
+        user-select: none;
+        z-index: 1;
+    }
+
+    .tier-label {
+        align-self: flex-end;
+        background: rgba(255,255,255,0.1);
+        padding: 6px 14px;
+        border-radius: 12px;
+        font-weight: bold;
+        font-size: 0.8em;
+        letter-spacing: 1px;
+        z-index: 2;
+        backdrop-filter: blur(4px);
+    }
+
+    .member-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        z-index: 2;
+    }
+
+    .avatar {
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        border: 3px solid rgba(255,255,255,0.4);
+        object-fit: cover;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    .member-info h2 {
+        margin: 0;
+        font-size: 1.4em;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .member-info span {
+        font-size: 0.9em;
+        opacity: 0.85;
+    }
+
+    .member-body {
+        font-size: 0.95em;
+        line-height: 1.5em;
+        z-index: 2;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+
+    .level-label {
+        align-self: flex-end;
+        background: rgba(255,255,255,0.1);
+        padding: 5px 12px;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 0.8em;
+        z-index: 2;
+        backdrop-filter: blur(4px);
+    }
+</style>
+</head>
+<body>
+
+<!-- Member -->
+<div class="member-card member">
+    <div class="watermark">Carthylia</div>
+    <div class="tier-label">MEMBER</div>
+    <div class="member-header">
+        <img src="https://i.pravatar.cc/100" alt="Avatar" class="avatar">
+        <div class="member-info">
+            <h2>Basic Member</h2>
+            <span>Joined 2025</span>
+        </div>
+    </div>
+    <div class="member-body">Access to community updates.</div>
+    <div class="level-label">LV.0 Member</div>
+</div>
+
+<!-- Moonstone -->
+<div class="member-card moonstone">
+    <div class="watermark">Carthylia</div>
+    <div class="tier-label">MOONSTONE</div>
+    <div class="member-header">
+        <img src="https://i.pravatar.cc/100" alt="Avatar" class="avatar">
+        <div class="member-info">
+            <h2>Moonwalker</h2>
+            <span>Joined 2024</span>
+        </div>
+    </div>
+    <div class="member-body">Exclusive Discord perks + behind-the-scenes.</div>
+    <div class="level-label">LV.1 Moonstone</div>
+</div>
+
+<!-- Stardust -->
+<div class="member-card stardust">
+    <div class="watermark">Carthylia</div>
+    <div class="tier-label">STARDUST</div>
+    <div class="member-header">
+        <img src="https://i.pravatar.cc/100" alt="Avatar" class="avatar">
+        <div class="member-info">
+            <h2>Star Champion <span class="crown-badge"></span></h2>
+            <span>Joined 2023</span>
+        </div>
+    </div>
+    <div class="member-body">All perks + exclusive events + VIP rewards.</div>
+    <div class="level-label">LV.2 Stardust</div>
+</div>
+
+</body>
+</html>

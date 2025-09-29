@@ -1,9 +1,12 @@
-use std::{collections::HashMap, sync::{Arc, Mutex}};
 use once_cell::sync::Lazy;
 use serenity::all::UserId;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 enum EventRoute {
-    ModerateEvent(String), 
+    ModerateEvent(String),
 }
 
 // global singleton
@@ -11,7 +14,7 @@ pub static EVENT_ROUTER: Lazy<EventRouter> = Lazy::new(EventRouter::new);
 
 #[derive(Clone)]
 pub struct EventRouter {
-    routes: Arc<Mutex<HashMap<UserId,EventRoute>>>,
+    routes: Arc<Mutex<HashMap<UserId, EventRoute>>>,
 }
 
 impl EventRouter {
@@ -22,10 +25,10 @@ impl EventRouter {
     }
 
     pub fn register(&self, router_id: impl Into<String>, user: &UserId) {
-        self.routes.lock().unwrap().insert(*user, EventRoute::ModerateEvent(router_id.into()));
-
-        tracing::info!("Registered route for user: {}", user);
-        
+        self.routes
+            .lock()
+            .unwrap()
+            .insert(*user, EventRoute::ModerateEvent(router_id.into()));
     }
 
     pub fn unregister(&self, router_id: &str, user: UserId) {
@@ -35,7 +38,7 @@ impl EventRouter {
                 EventRoute::ModerateEvent(rid) if rid == router_id => {
                     routes.remove(&user);
                     tracing::info!("Unregistered route for user: {}", user);
-                },
+                }
                 _ => {
                     tracing::warn!("No matching route found for user: {}", user);
                 }
@@ -43,15 +46,11 @@ impl EventRouter {
         } else {
             tracing::warn!("No route found for user: {}", user);
         }
-
     }
 
     pub fn check_gateway(&self, router_id: &str, user: &UserId) -> bool {
         let routes = self.routes.lock().unwrap();
         if let Some(route) = routes.get(user) {
-
-            tracing::info!("Checking route for user: {}", user);
-
             match route {
                 EventRoute::ModerateEvent(rid) if rid == router_id => true,
                 _ => false,

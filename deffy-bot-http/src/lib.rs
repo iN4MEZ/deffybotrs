@@ -5,17 +5,10 @@ use axum::{
     routing::get,
 };
 use tokio::{net::TcpListener, time::Instant};
-use dotenv::dotenv;
 
 mod routes;
 
 pub async fn http_init() -> Result<(), anyhow::Error> {
-    if let Err(_) = dotenv() {
-        tracing::error!("Failed to load .env file");
-    }
-
-    tracing::trace!("Starting HTTP server...");
-
     tokio::spawn(async {
         if let Err(e) = start_http().await {
             tracing::error!("Failed to start HTTP server: {:?}", e);

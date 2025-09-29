@@ -1,14 +1,14 @@
 use deffy_bot_macro::event;
 use once_cell::sync::OnceCell;
 use serenity::all::{Context, GuildId, Http};
-use std::{env, sync::Arc};
+use std::{collections::HashMap, env, sync::Arc};
 use tokio::sync::{Mutex, mpsc};
 
 pub static BOT_HTTP: OnceCell<Arc<Http>> = OnceCell::new();
 
 use crate::{
-    command::system::manager::{CommandJob, CommandManager, spawn_command_worker},
-    event::manager::EventData,
+    command::{handler::moderator_command::BanSession, system::manager::{spawn_command_worker, CommandJob, CommandManager}},
+    event::manager::EventData, session::manager::UserSessionManager,
 };
 
 pub static COMMAND_MANAGER: OnceCell<Arc<Mutex<CommandManager>>> = OnceCell::new();
@@ -21,6 +21,8 @@ async fn on_ready(ctx: Context, _data: EventData) -> Result<(), Error> {
             .parse()
             .expect("GUILD_ID must be an integer"),
     );
+
+    UserSessionManager::new(&ctx).await;
 
     let (tx, rx) = mpsc::channel::<CommandJob>(100);
 
@@ -46,6 +48,11 @@ async fn on_ready(ctx: Context, _data: EventData) -> Result<(), Error> {
     }
 
     BOT_HTTP.set(ctx.http.clone()).ok();
+
+    {
+        let mut data = ctx.data.write().await;
+        data.insert::<BanSession>(Arc::new(Mutex::new(HashMap::new())));
+    }
 
     tracing::info!("Logged in as {}", &ctx.cache.current_user().name);
 

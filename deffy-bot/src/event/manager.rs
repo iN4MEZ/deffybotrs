@@ -1,4 +1,7 @@
-use serenity::{all::Context, async_trait};
+use serenity::{
+    all::{Context, Interaction, UserId},
+    async_trait,
+};
 use tokio::sync::mpsc;
 
 use crate::event::event_router::EVENT_ROUTER;
@@ -18,24 +21,20 @@ pub trait Hookable: Sync + Send + 'static {
 
 inventory::collect!(&'static dyn Hookable);
 
-pub fn spawn_event_dispatcher(
-    mut rx: mpsc::Receiver<(String, Context, EventData)>,
-) {
+pub fn spawn_event_dispatcher(mut rx: mpsc::Receiver<(String, Context, EventData)>) {
     tokio::spawn(async move {
         while let Some((event_name, ctx, data)) = rx.recv().await {
             for handler in inventory::iter::<&dyn Hookable> {
-                    let route_opt = handler.route();
-                    if let Some(route) = route_opt {
-
-                        if let EventData::Interaction(interaction) = &data {
-                            if let Some(user) = interaction.as_message_component().as_ref().and_then(|component| Some(component.user.id.as_ref())) {
-                                if !EVENT_ROUTER.check_gateway(route, &user) {
-                                    continue;
-                                }
+                let route_opt = handler.route();
+                if let Some(route) = route_opt {
+                    if let EventData::Interaction(interaction) = &data {
+                        if let Some(user) = extract_user_id(interaction) {
+                            if !EVENT_ROUTER.check_gateway(route, &user) {
+                                continue;
                             }
                         }
                     }
-
+                }
                 if let Err(err) = handler.call(&event_name, ctx.clone(), data.clone()).await {
                     tracing::error!("[Event Error] {}: {:?}", event_name, err);
                 }
@@ -51,20 +50,44 @@ pub struct MasterHandler {
 #[serenity::async_trait]
 impl serenity::prelude::EventHandler for MasterHandler {
     async fn ready(&self, ctx: Context, data: serenity::model::prelude::Ready) {
-        if let Err(e) = self.tx.send(("ready".into(), ctx, EventData::Ready(data))).await {
+        if let Err(e) = self
+            .tx
+            .send(("ready".into(), ctx, EventData::Ready(data)))
+            .await
+        {
             tracing::error!("Send error: {}", e);
         }
     }
 
     async fn interaction_create(&self, ctx: Context, data: serenity::model::prelude::Interaction) {
-        if let Err(e) = self.tx.send(("interaction_create".into(), ctx, EventData::Interaction(data))).await {
+        if let Err(e) = self
+            .tx
+            .send((
+                "interaction_create".into(),
+                ctx,
+                EventData::Interaction(data),
+            ))
+            .await
+        {
             tracing::error!("Send error: {}", e);
         }
     }
 
     async fn message(&self, ctx: Context, data: serenity::model::prelude::Message) {
-        if let Err(e) = self.tx.send(("message".into(), ctx, EventData::Message(data))).await {
+        if let Err(e) = self
+            .tx
+            .send(("message".into(), ctx, EventData::Message(data)))
+            .await
+        {
             tracing::error!("Send error: {}", e);
         }
     }
+}
+
+fn extract_user_id(interaction: &Interaction) -> Option<UserId> {
+    interaction
+        .as_message_component()
+        .map(|c| c.user.id.clone())
+        .or_else(|| interaction.as_command().map(|c| c.user.id.clone()))
+        .or_else(|| interaction.as_modal_submit().map(|c| c.user.id.clone()))
 }

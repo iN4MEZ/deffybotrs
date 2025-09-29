@@ -2,11 +2,10 @@ use deffy_bot_http::http_init;
 use deffy_bot_utils::event::manager::EVENT_MANAGER;
 use dotenv::dotenv;
 use std::env;
-use tracing_subscriber::EnvFilter;
 
 mod command;
 mod event;
-
+mod session;
 use serenity::{Client, all::GatewayIntents};
 use tokio::sync::mpsc;
 
@@ -14,8 +13,8 @@ use crate::event::manager::{MasterHandler, spawn_event_dispatcher};
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
-    if let Err(_) = dotenv() {
-        tracing::error!("Failed to load .env file");
+    if let Err(e) = dotenv() {
+        tracing::error!("Failed to load .env file {:?}",e);
     }
 
     init_logging();
@@ -26,9 +25,8 @@ async fn main() {
         tracing::error!("Failed to initialize HTTP server: {:?}", e);
     }
 
-    match init_database().await {
-        Ok(_) => tracing::info!("Database initialized successfully"),
-        Err(e) => tracing::error!("Failed to initialize database: {:?}", e),
+    if let Err(e) = init_database().await {
+        tracing::error!("Failed to initialize database: {:?}", e);
     }
 
     match init_discord_client().await {
@@ -41,7 +39,16 @@ async fn main() {
 }
 
 fn init_logging() {
-    let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| {
+
+    #[cfg(debug_assertions)] // ใช้เฉพาะ dev/debug
+    {
+        console_subscriber::init();
+    }
+
+    #[cfg(not(debug_assertions))] // release
+    {
+        use tracing_subscriber::{prelude::*, EnvFilter};
+        let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| {
         if cfg!(debug_assertions) {
             "trace".to_string() // default debug build
         } else {
@@ -52,6 +59,13 @@ fn init_logging() {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::new(filter))
         .init();
+    }
+
+    // tracing_subscriber::registry()
+    // .with(console_subscriber::spawn())
+    // .with(tracing_subscriber::fmt::layer())
+    // .with(EnvFilter::new(filter))
+    // .init();
 }
 
 async fn init_database() -> Result<(), anyhow::Error> {
